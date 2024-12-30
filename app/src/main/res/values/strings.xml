@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">DiseasePredictionAppProject</string>
+
+    <string name="bottom_prediction">예측</string>
+    <string name="bottom_home">홈</string>
+    <string name="bottom_settings">설정</string>
+    <string name="bottom_saved">저장</string>
 </resources>
