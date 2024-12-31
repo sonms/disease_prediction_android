@@ -2,7 +2,6 @@ package com.example.diseasepredictionappproject
 
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.RequiresApi
@@ -32,12 +31,10 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument
 import com.example.diseasepredictionappproject.ui.theme.DiseasePredictionAppProjectTheme
-import com.example.diseasepredictionappproject.ui.theme.blueColor4
 import com.example.diseasepredictionappproject.ui.theme.blueColor5
-import com.example.diseasepredictionappproject.ui.theme.blueColor6
 import com.example.diseasepredictionappproject.ui.theme.blueColor7
+import com.example.diseasepredictionappproject.view.bottom_navigation.home.HomeScreen
 
 class MainActivity : ComponentActivity() {
 
@@ -163,7 +160,7 @@ fun BottomNavigation(navController: NavController) {
 fun NavigationGraph(navController: NavHostController) {
     NavHost(navController = navController, startDestination = MainActivity.BottomNavItem.Home.screenRoute) {
         composable(MainActivity.BottomNavItem.Home.screenRoute) {
-            //HomeScreen(navController)
+            HomeScreen(navController)
         }
         composable(MainActivity.BottomNavItem.Prediction.screenRoute) {
             //ChartScreen()
