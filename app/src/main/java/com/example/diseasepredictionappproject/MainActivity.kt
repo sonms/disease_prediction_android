@@ -35,7 +35,9 @@ import com.example.diseasepredictionappproject.ui.theme.DiseasePredictionAppProj
 import com.example.diseasepredictionappproject.ui.theme.blueColor5
 import com.example.diseasepredictionappproject.ui.theme.blueColor7
 import com.example.diseasepredictionappproject.view.bottom_navigation.home.HomeScreen
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
     sealed class BottomNavItem(
