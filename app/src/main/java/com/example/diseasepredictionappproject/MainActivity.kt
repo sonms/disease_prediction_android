@@ -35,6 +35,7 @@ import com.example.diseasepredictionappproject.ui.theme.DiseasePredictionAppProj
 import com.example.diseasepredictionappproject.ui.theme.blueColor5
 import com.example.diseasepredictionappproject.ui.theme.blueColor7
 import com.example.diseasepredictionappproject.view.bottom_navigation.home.HomeScreen
+import com.example.diseasepredictionappproject.view.bottom_navigation.predict.PredictScreen
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -165,7 +166,7 @@ fun NavigationGraph(navController: NavHostController) {
             HomeScreen(navController)
         }
         composable(MainActivity.BottomNavItem.Prediction.screenRoute) {
-            //ChartScreen()
+            PredictScreen()
         }
         composable(MainActivity.BottomNavItem.Saved.screenRoute) {
             //CalendarScreen(navController)
