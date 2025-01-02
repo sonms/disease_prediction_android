@@ -25,4 +25,24 @@ class PredictionRepository @Inject constructor(private val predictionDao: Predic
     fun getBookMarkPredictionData() : Flow<List<PredictionEntity>> {
         return predictionDao.getBookMarkedPredictions()
     }
+
+
+    suspend fun insertPredictionData(data: PredictionEntity) {
+        predictionDao.insertPredictionData(data)
+    }
+
+    //데이터 수정
+    suspend fun updateData(data : PredictionEntity) {
+        predictionDao.updatePredictionData(data)
+    }
+
+    // 할 일 삭제
+    suspend fun deleteDataById(id: Long) {
+        predictionDao.deletePredictionData(id)
+    }
+
+    //특정 데이터만 수정
+    suspend fun updateOnlySpecificData(id : Long, isBookMarked : Boolean) {
+        predictionDao.updatePredictionFields(id, isBookMarked)
+    }
 }

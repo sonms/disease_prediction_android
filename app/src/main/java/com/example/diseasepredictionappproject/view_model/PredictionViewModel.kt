@@ -7,6 +7,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.switchMap
+import androidx.lifecycle.viewModelScope
 import com.example.diseasepredictionappproject.room_db.PredictionEntity
 import com.example.diseasepredictionappproject.view_model.repository.PredictionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -15,6 +16,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.switchMap
+import kotlinx.coroutines.launch
 import java.time.YearMonth
 import javax.inject.Inject
 
@@ -50,4 +52,60 @@ class PredictionViewModel @Inject constructor(
                 month = formattedMonth
             )
         }
+
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun addPredictionData(diseaseName : String, diseaseContent : String, isBookMark : Boolean, recommendMedication : String) {
+        /*
+        var diseaseName : String?, //저장된 거 이름
+        @ColumnInfo
+        var diseaseContent : String?, //저장된 거 정보요약 / itching등
+        @ColumnInfo
+        val createDate: String = LocalDateTime.now().toString(),
+        @ColumnInfo
+        var isBookMark : Boolean?, //북마크 여부
+        @ColumnInfo
+        var recommendMedication : String? //추천 약
+        */
+
+        viewModelScope.launch {
+            val newData = PredictionEntity(
+                diseaseName = diseaseName,
+                diseaseContent = diseaseContent,
+                isBookMark = isBookMark,
+                recommendMedication = recommendMedication
+            )
+            repository.insertPredictionData(newData)
+        }
+    }
+
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun updateFinancialData(id: Long, diseaseName : String, diseaseContent : String, isBookMark : Boolean, recommendMedication : String) {
+        /*
+        *  val categoryId: Long?,
+    val content: String?,
+    val createDate: String = LocalDateTime.now().toString(),
+    val date: String?,
+    val expenditure: Long?,
+    val income: Long?*/
+
+        viewModelScope.launch {
+            val newData = PredictionEntity(
+                id = id,
+                diseaseName = diseaseName,
+                diseaseContent = diseaseContent,
+                isBookMark = isBookMark,
+                recommendMedication = recommendMedication
+            )
+
+            repository.updateData(newData)
+        }
+    }
+
+    fun deletePredictionData(predictionEntity: PredictionEntity) {
+        viewModelScope.launch {
+            repository.deleteDataById(predictionEntity.id)
+        }
+    }
 }
