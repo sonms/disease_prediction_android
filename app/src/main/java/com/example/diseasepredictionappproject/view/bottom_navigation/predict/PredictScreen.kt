@@ -1,5 +1,8 @@
 package com.example.diseasepredictionappproject.view.bottom_navigation.predict
 
+import android.content.Context
+import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -23,6 +26,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -31,8 +35,13 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.diseasepredictionappproject.data.HealthTipData
 import com.example.diseasepredictionappproject.data.PredictionDiseaseResponse
 import com.example.diseasepredictionappproject.data.PredictionFeaturesData
+import com.example.diseasepredictionappproject.loading.LoadingState
+import com.example.diseasepredictionappproject.network.RetrofitClient
 import com.example.diseasepredictionappproject.ui.theme.blueColor4
 import com.example.diseasepredictionappproject.view_model.PredictionViewModel
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 
 fun getPredictionFeatures(): List<PredictionDiseaseResponse> {
@@ -114,6 +123,15 @@ fun PredictScreen(
         mutableStateOf(0)
     }
 
+    var predictionDiseaseName by remember {
+        mutableStateOf("")
+    }
+
+    var postData by remember { mutableStateOf(mutableListOf<Int>()) }
+
+
+    val context = LocalContext.current
+
     Column (
         modifier = Modifier
             .fillMaxSize()
@@ -159,6 +177,7 @@ fun PredictScreen(
                 Button(
                     onClick = { 
                         listIndex += 1
+                        postData.add(1)
                     }
                 ) {
                     Text(
@@ -177,6 +196,7 @@ fun PredictScreen(
                 Button(
                     onClick = {
                         listIndex += 1
+                        postData.add(0)
                     }
                 ) {
                     Text(
@@ -191,7 +211,77 @@ fun PredictScreen(
         }
         
         if (listIndex == 20) {
-            Text(text = "2202020202020200202임")
+            val data = PredictionFeaturesData(
+                itching = postData.getOrNull(0) ?: 0,
+                joint_pain = postData.getOrNull(1) ?: 0,
+                stomach_pain = postData.getOrNull(2) ?: 0,
+                vomiting = postData.getOrNull(3) ?: 0,
+                fatigue = postData.getOrNull(4) ?: 0,
+                high_fever = postData.getOrNull(5) ?: 0,
+                dark_urine = postData.getOrNull(6) ?: 0,
+                nausea = postData.getOrNull(7) ?: 0,
+                loss_of_appetite = postData.getOrNull(8) ?: 0,
+                abdominal_pain = postData.getOrNull(9) ?: 0,
+                diarrhoea = postData.getOrNull(10) ?: 0,
+                mild_fever = postData.getOrNull(11) ?: 0,
+                yellowing_of_eyes = postData.getOrNull(12) ?: 0,
+                chest_pain = postData.getOrNull(13) ?: 0,
+                muscle_weakness = postData.getOrNull(14) ?: 0,
+                muscle_pain = postData.getOrNull(15) ?: 0,
+                altered_sensorium = postData.getOrNull(16) ?: 0,
+                family_history = postData.getOrNull(17) ?: 0,
+                mucoid_sputum = postData.getOrNull(18) ?: 0,
+                lack_of_concentration = postData.getOrNull(19) ?: 0
+            )
+
+            Log.d("prediction 데이터", data.toString())
+
+            postPredictionFeatures(data, context) {
+                it?.let {
+                    predictionDiseaseName = it
+                }
+            }
+
+            // 결과 출력
+            Text(
+                text = "예측된 질병: $predictionDiseaseName",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(top = 16.dp)
+            )
         }
+    }
+}
+
+fun postPredictionFeatures(
+    features: PredictionFeaturesData?,
+    context: Context,
+    onResult: (String?) -> Unit
+) {
+    LoadingState.show()
+    if (features != null) {
+        RetrofitClient.instance.postPredictDisease(features).enqueue(object :
+            Callback<PredictionDiseaseResponse> {
+            override fun onResponse(
+                call: Call<PredictionDiseaseResponse>,
+                response: Response<PredictionDiseaseResponse>
+            ) {
+                if (response.isSuccessful) {
+                    val diseaseName = response.body()?.diseaseName
+                    Log.d("issuccess", diseaseName.toString())
+                    onResult(diseaseName) // 결과값 전달
+                } else {
+                    Log.e("postP", response.message().toString())
+                    Toast.makeText(context, "예측에 실패하였습니다. ${response.code()}", Toast.LENGTH_SHORT)
+                        .show()
+                    onResult(null) // 에러 시 null 전달
+                }
+            }
+
+            override fun onFailure(call: Call<PredictionDiseaseResponse>, t: Throwable) {
+                Log.e("postP", t.message.toString())
+                onResult(null) // 에러 시 null 전달
+            }
+        })
     }
 }
