@@ -1,8 +1,11 @@
 package com.example.diseasepredictionappproject.view.bottom_navigation.predict
 
 import android.content.Context
+import android.os.Build
 import android.util.Log
 import android.widget.Toast
+import androidx.annotation.RequiresApi
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -16,6 +19,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -25,13 +30,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.diseasepredictionappproject.R
 import com.example.diseasepredictionappproject.data.HealthTipData
 import com.example.diseasepredictionappproject.data.PredictionDiseaseResponse
 import com.example.diseasepredictionappproject.data.PredictionFeaturesData
@@ -109,10 +117,18 @@ fun getPredictionFeatures(): List<PredictionDiseaseResponse> {
     )
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun PredictScreen(
     viewModel: PredictionViewModel = hiltViewModel()
 ) {
+    val featureNames = listOf(
+        "itching", "joint_pain", "stomach_pain", "vomiting", "fatigue", "high_fever",
+        "dark_urine", "nausea", "loss_of_appetite", "abdominal_pain", "diarrhoea",
+        "mild_fever", "yellowing_of_eyes", "chest_pain", "muscle_weakness", "muscle_pain",
+        "altered_sensorium", "family_history", "mucoid_sputum", "lack_of_concentration"
+    )
+
     var isClick by remember {
         mutableStateOf(false)
     }
@@ -127,7 +143,15 @@ fun PredictScreen(
         mutableStateOf("")
     }
 
-    var postData by remember { mutableStateOf(mutableListOf<Int>()) }
+    val postData by remember { mutableStateOf(mutableListOf<Int>()) }
+
+    var visible by remember {
+        mutableStateOf(false)
+    }
+
+    val animatedAlpha by animateFloatAsState(
+        targetValue = if (visible) 1.0f else 0f, label = ""
+    )
 
 
     val context = LocalContext.current
@@ -239,6 +263,7 @@ fun PredictScreen(
             postPredictionFeatures(data, context) {
                 it?.let {
                     predictionDiseaseName = it
+                    visible = !visible
                 }
             }
 
@@ -247,8 +272,35 @@ fun PredictScreen(
                 text = "예측된 질병: $predictionDiseaseName",
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(top = 16.dp)
+                modifier = Modifier
+                    .padding(top = 16.dp)
+                    .alpha(animatedAlpha)
             )
+
+
+            Row (
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .wrapContentHeight()
+                    .padding(10.dp)
+                    .alpha(animatedAlpha),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = "저장하시겠습니까?",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier
+                        .padding(top = 16.dp)
+                )
+
+                IconButton(onClick = {
+                    val activeFeatures = featureNames.zip(postData).filter { it.second == 1 }.map { it.first }
+                    viewModel.addPredictionData(predictionDiseaseName, activeFeatures.joinToString(", "), false, "")
+                }) {
+                    Icon(painter = painterResource(id = R.drawable.baseline_bookmark_24), contentDescription = "saved", tint = Color.White)
+                }
+            }
         }
     }
 }
