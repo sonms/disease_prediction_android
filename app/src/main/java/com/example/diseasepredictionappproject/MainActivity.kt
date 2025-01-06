@@ -31,11 +31,14 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.diseasepredictionappproject.ui.theme.DiseasePredictionAppProjectTheme
 import com.example.diseasepredictionappproject.ui.theme.blueColor5
 import com.example.diseasepredictionappproject.ui.theme.blueColor7
 import com.example.diseasepredictionappproject.view.bottom_navigation.home.HomeScreen
 import com.example.diseasepredictionappproject.view.bottom_navigation.predict.PredictScreen
+import com.example.diseasepredictionappproject.view.bottom_navigation.saved.DetailScreen
+import com.example.diseasepredictionappproject.view.bottom_navigation.saved.SavedScreen
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -170,9 +173,22 @@ fun NavigationGraph(navController: NavHostController) {
         }
         composable(MainActivity.BottomNavItem.Saved.screenRoute) {
             //CalendarScreen(navController)
+            SavedScreen(navController = navController)
         }
         composable(MainActivity.BottomNavItem.Settings.screenRoute) {
             //SettingScreen()
+        }
+
+        composable(
+            route = "detail?id={id}",
+            arguments = listOf(
+                navArgument("id") { defaultValue = "-1" }
+            )
+        ) { backStackEntry ->
+
+            val id = backStackEntry.arguments?.getString("id") ?: "-1"
+
+            DetailScreen(id = id.toLongOrNull(), navController)
         }
 
         /*composable(
