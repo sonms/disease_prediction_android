@@ -27,6 +27,14 @@ class PredictionRepository @Inject constructor(private val predictionDao: Predic
     }
 
 
+
+    // 특정 ID에 해당하는 데이터를 가져오는 함수
+    suspend fun getDataById(id: Long?): PredictionEntity? {
+        return id?.let {
+            predictionDao.getSavedDataById(id)
+        }
+    }
+
     suspend fun insertPredictionData(data: PredictionEntity) {
         predictionDao.insertPredictionData(data)
     }

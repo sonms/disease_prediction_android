@@ -20,6 +20,9 @@ interface PredictionDao {
     @Query("SELECT * FROM PredictionTable WHERE isBookMark = 1 ORDER BY createDate DESC")
     fun getBookMarkedPredictions(): Flow<List<PredictionEntity>> // 북마크 필터링
 
+    @Query("SELECT * FROM PREDICTIONTABLE WHERE id = :id")
+    suspend fun getSavedDataById(id : Long) : PredictionEntity?
+
 
 
     //예측 데이터 insert, delete, update
