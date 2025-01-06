@@ -19,10 +19,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -45,7 +47,9 @@ import com.example.diseasepredictionappproject.data.PredictionDiseaseResponse
 import com.example.diseasepredictionappproject.data.PredictionFeaturesData
 import com.example.diseasepredictionappproject.loading.LoadingState
 import com.example.diseasepredictionappproject.network.RetrofitClient
+import com.example.diseasepredictionappproject.room_db.PredictionEntity
 import com.example.diseasepredictionappproject.ui.theme.blueColor4
+import com.example.diseasepredictionappproject.ui.theme.blueColor5
 import com.example.diseasepredictionappproject.view_model.PredictionViewModel
 import retrofit2.Call
 import retrofit2.Callback
@@ -123,38 +127,106 @@ fun PredictScreen(
     viewModel: PredictionViewModel = hiltViewModel()
 ) {
     val featureNames = listOf(
-        "itching", "joint_pain", "stomach_pain", "vomiting", "fatigue", "high_fever",
-        "dark_urine", "nausea", "loss_of_appetite", "abdominal_pain", "diarrhoea",
-        "mild_fever", "yellowing_of_eyes", "chest_pain", "muscle_weakness", "muscle_pain",
-        "altered_sensorium", "family_history", "mucoid_sputum", "lack_of_concentration"
+        "가려움", "관절 통증", "구토", "피로", "고열",
+        "발한", "짙은 소변", "메스꺼움", "식욕 부진", "복부 통증",
+        "설사", "미열", "눈의 황변", "가슴 통증", "비틀거림",
+        "근육통", "감각 이상", "몸에 붉은 반점", "가족력", "집중력 부족"
     )
+    val uiState by viewModel.uiState.collectAsState()
 
-    var isClick by remember {
+    val context = LocalContext.current
+
+    //질문제어
+    var isClick by remember { //시작 시 버튼 클릭 remember
         mutableStateOf(false)
     }
-
-    val getFeaturesName = getPredictionFeatures()
-
     var listIndex by remember {
         mutableStateOf(0)
     }
 
+
+    //피처 값들 제어
+    val getFeaturesName = getPredictionFeatures()
+
     var predictionDiseaseName by remember {
-        mutableStateOf("")
+        mutableStateOf<String?>(null)
     }
 
     val postData by remember { mutableStateOf(mutableListOf<Int>()) }
 
+    var features by remember {
+        mutableStateOf<PredictionFeaturesData?>(null)
+    }
+
+    //디자인 제어
     var visible by remember {
         mutableStateOf(false)
     }
-
     val animatedAlpha by animateFloatAsState(
         targetValue = if (visible) 1.0f else 0f, label = ""
     )
+    var isSaved by remember { mutableStateOf(false) }
 
+    //통신제어
+    var isPredictionComplete by remember { mutableStateOf(false) }
 
-    val context = LocalContext.current
+    //초기화
+    LaunchedEffect(Unit) {
+        predictionDiseaseName = null
+        // 예측 완료 후 isPredictionComplete 상태 변경
+        isPredictionComplete = false
+        visible = false
+        isSaved = false
+        features = null
+        listIndex = 0
+        isClick = false
+    }
+
+    // 처음 한 번만 API 호출이 이루어지도록 설정
+    if (!isPredictionComplete) {
+        LaunchedEffect(features) {
+            features?.let {
+                viewModel.fetchPrediction(it)
+            }
+        }
+    }
+
+    if (predictionDiseaseName != null) {
+        LaunchedEffect(predictionDiseaseName) {
+            isPredictionComplete = !isPredictionComplete
+            visible = !visible
+            Log.d("predictionDiseaseName", predictionDiseaseName.toString())
+            Log.d("isPredictionComplete", isPredictionComplete.toString())
+        }
+    }
+
+    when (uiState) {
+        is PredictionViewModel.UiState.Loading -> {
+            LoadingState.show()
+        }
+        is PredictionViewModel.UiState.Success -> {
+            val diseaseName = (uiState as PredictionViewModel.UiState.Success).data
+            Log.d("issuccess", diseaseName)
+            // diseaseName을 UI에 반영하거나, 필요한 작업을 추가로 수행
+            predictionDiseaseName = diseaseName
+            // 예측 완료 후 isPredictionComplete 상태 변경
+            isPredictionComplete = true
+            viewModel.fetchUIState(PredictionViewModel.UiState.Wait)
+        }
+        is PredictionViewModel.UiState.Error -> {
+            val error = (uiState as PredictionViewModel.UiState.Error).message
+            Text(text = "에러 발생: $error")
+        }
+        is PredictionViewModel.UiState.Wait -> {
+
+        }
+    }
+
+    // API 호출 결과를 기억
+    val featuresName = remember { mutableStateOf(emptyList<PredictionDiseaseResponse>()) }
+    LaunchedEffect(Unit) {
+        featuresName.value = getPredictionFeatures()
+    }
 
     Column (
         modifier = Modifier
@@ -168,7 +240,7 @@ fun PredictScreen(
             Text(text = "스스로 질병 예측하기")
 
             Button(
-                modifier = Modifier.padding(start = 20.dp),
+                modifier = Modifier.padding(top = 20.dp),
                 onClick = {
                     isClick = !isClick
                 },
@@ -258,15 +330,11 @@ fun PredictScreen(
                 lack_of_concentration = postData.getOrNull(19) ?: 0
             )
 
-            Log.d("prediction 데이터", data.toString())
+            features = data
+        }
 
-            postPredictionFeatures(data, context) {
-                it?.let {
-                    predictionDiseaseName = it
-                    visible = !visible
-                }
-            }
 
+        if (isPredictionComplete) {
             // 결과 출력
             Text(
                 text = "예측된 질병: $predictionDiseaseName",
@@ -284,7 +352,8 @@ fun PredictScreen(
                     .wrapContentHeight()
                     .padding(10.dp)
                     .alpha(animatedAlpha),
-                horizontalArrangement = Arrangement.Center
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
                     text = "저장하시겠습니까?",
@@ -294,17 +363,26 @@ fun PredictScreen(
                         .padding(top = 16.dp)
                 )
 
-                IconButton(onClick = {
+                IconButton(
+                    modifier = Modifier.padding(top = 16.dp),
+                    onClick = {
                     val activeFeatures = featureNames.zip(postData).filter { it.second == 1 }.map { it.first }
-                    viewModel.addPredictionData(predictionDiseaseName, activeFeatures.joinToString(", "), false, "")
+                    predictionDiseaseName?.let { viewModel.addPredictionData(it, activeFeatures.joinToString(", "), false, "") }
+
+                    isSaved = !isSaved
                 }) {
-                    Icon(painter = painterResource(id = R.drawable.baseline_bookmark_24), contentDescription = "saved", tint = Color.White)
+                    Icon(
+                        painter = painterResource(id = R.drawable.baseline_bookmark_border_24),
+                        contentDescription = "saved",
+                        tint = if (isSaved) blueColor5 else Color.Black
+                    )
                 }
             }
         }
     }
 }
 
+/*
 fun postPredictionFeatures(
     features: PredictionFeaturesData?,
     context: Context,
@@ -336,4 +414,4 @@ fun postPredictionFeatures(
             }
         })
     }
-}
+}*/
