@@ -34,6 +34,9 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.diseasepredictionappproject.data.HealthTipData
+import com.example.diseasepredictionappproject.room_db.PredictionEntity
+import com.example.diseasepredictionappproject.view.bottom_navigation.saved.DeleteItemDialog
+import com.example.diseasepredictionappproject.view.bottom_navigation.saved.SavedItem
 import com.example.diseasepredictionappproject.view_model.PredictionViewModel
 
 
@@ -89,6 +92,14 @@ fun HomeScreen( //건강관련팁, 질병정보검색, 최근예측결과요약
     /*LaunchedEffect(isSearchOpen) {
         navController
     }*/
+
+    var isShow by remember {
+        mutableStateOf(false)
+    }
+    var deleteItem by remember {
+        mutableStateOf<PredictionEntity?>(null)
+    }
+
     LaunchedEffect(Unit) {
         healthTipData= getHealthTips().shuffled()[0]
     }
@@ -136,10 +147,35 @@ fun HomeScreen( //건강관련팁, 질병정보검색, 최근예측결과요약
                 itemsIndexed (
                     items = bookMarkedData
                 ) {_, bookMarkItem ->
-
+                    SavedItem(
+                        data = bookMarkItem,
+                        onClick = {
+                            navController.navigate("detail?id=${bookMarkItem.id}")
+                        },
+                        onLongClick = {
+                            deleteItem = it
+                            isShow = !isShow
+                        },
+                        onStarClick = {
+                            predictionViewModel.updateOnlySpecificData(id = bookMarkItem.id, isBookMark = !bookMarkItem.isBookMark!!)
+                        },
+                    )
                 }
             }
         }
+    }
+
+    if (isShow) {
+        DeleteItemDialog(deleteItem,
+            onConfirmClick = {
+                isShow = !isShow
+                it?.let {
+                    predictionViewModel.deletePredictionData(it)
+                }
+            },
+            onCancelClick = {
+                isShow = !isShow
+            })
     }
 }
 
