@@ -26,7 +26,7 @@ import javax.inject.Inject
 @HiltViewModel
 class PredictionViewModel @Inject constructor(
     private val repository: PredictionRepository,
-    private val retrofitRepository: RetrofitFastApiRepository
+
 ) : ViewModel() {
 
     //모든 예측데이터
@@ -113,13 +113,6 @@ class PredictionViewModel @Inject constructor(
 
     @RequiresApi(Build.VERSION_CODES.O)
     fun updateFinancialData(id: Long, diseaseName : String, diseaseContent : String, isBookMark : Boolean, recommendMedication : String) {
-        /*
-        *  val categoryId: Long?,
-    val content: String?,
-    val createDate: String = LocalDateTime.now().toString(),
-    val date: String?,
-    val expenditure: Long?,
-    val income: Long?*/
         viewModelScope.launch {
             val newData = PredictionEntity(
                 id = id,
@@ -143,57 +136,5 @@ class PredictionViewModel @Inject constructor(
         viewModelScope.launch {
             repository.deleteDataById(predictionEntity.id)
         }
-    }
-
-
-
-    //fast api 연동하여 질병 값 가져오기
-    private val _uiState = MutableStateFlow<UiState>(UiState.Loading)
-    val uiState: StateFlow<UiState> = _uiState
-
-    fun fetchUIState(state: UiState) {
-        _uiState.value = state
-    }
-
-    fun fetchPrediction(features: PredictionFeaturesData) {
-        viewModelScope.launch {
-            _uiState.value = UiState.Loading
-            try {
-                val call = retrofitRepository.postPredictionFeatures(features)
-                call.enqueue(object : Callback<PredictionDiseaseResponse> {
-                    override fun onResponse(
-                        call: Call<PredictionDiseaseResponse>,
-                        response: Response<PredictionDiseaseResponse>
-                    ) {
-                        if (response.isSuccessful) {
-                            val diseaseName = response.body()?.diseaseName
-                            if (diseaseName != null) {
-                                // Success 상태가 여러 번 호출되지 않도록 보장
-                                if (_uiState.value !is UiState.Success) {
-                                    _uiState.value = UiState.Success(diseaseName)
-                                }
-                            } else {
-                                _uiState.value = UiState.Error("예측된 결과가 존재하지 않습니다. 다시 시도해주세요.")
-                            }
-                        } else {
-                            _uiState.value = UiState.Error("Error: ${response.code()}")
-                        }
-                    }
-
-                    override fun onFailure(call: Call<PredictionDiseaseResponse>, t: Throwable) {
-                        _uiState.value = UiState.Error("Failure: ${t.message}")
-                    }
-                })
-            } catch (e: Exception) {
-                _uiState.value = UiState.Error("Exception: ${e.message}")
-            }
-        }
-    }
-
-    sealed class UiState {
-        data object Loading : UiState()
-        data class Success(val data: String) : UiState()
-        data class Error(val message: String) : UiState()
-        data object Wait : UiState()
     }
 }
