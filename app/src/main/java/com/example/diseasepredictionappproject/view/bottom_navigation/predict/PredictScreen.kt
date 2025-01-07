@@ -1,12 +1,9 @@
 package com.example.diseasepredictionappproject.view.bottom_navigation.predict
 
-import android.content.Context
 import android.os.Build
 import android.util.Log
-import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -17,9 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -42,18 +37,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.diseasepredictionappproject.R
-import com.example.diseasepredictionappproject.data.HealthTipData
 import com.example.diseasepredictionappproject.data.PredictionDiseaseResponse
 import com.example.diseasepredictionappproject.data.PredictionFeaturesData
 import com.example.diseasepredictionappproject.loading.LoadingState
-import com.example.diseasepredictionappproject.network.RetrofitClient
-import com.example.diseasepredictionappproject.room_db.PredictionEntity
 import com.example.diseasepredictionappproject.ui.theme.blueColor4
 import com.example.diseasepredictionappproject.ui.theme.blueColor5
+import com.example.diseasepredictionappproject.view_model.FastApiViewModel
 import com.example.diseasepredictionappproject.view_model.PredictionViewModel
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
 
 
 fun getPredictionFeatures(): List<PredictionDiseaseResponse> {
@@ -124,7 +114,8 @@ fun getPredictionFeatures(): List<PredictionDiseaseResponse> {
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun PredictScreen(
-    viewModel: PredictionViewModel = hiltViewModel()
+    viewModel: PredictionViewModel = hiltViewModel(),
+    fastApiViewModel: FastApiViewModel = hiltViewModel()
 ) {
     val featureNames = listOf(
         "가려움", "관절 통증", "구토", "피로", "고열",
@@ -132,7 +123,7 @@ fun PredictScreen(
         "설사", "미열", "눈의 황변", "가슴 통증", "비틀거림",
         "근육통", "감각 이상", "몸에 붉은 반점", "가족력", "집중력 부족"
     )
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by fastApiViewModel.uiState.collectAsState()
 
     val context = LocalContext.current
 
@@ -180,13 +171,15 @@ fun PredictScreen(
         features = null
         listIndex = 0
         isClick = false
+
+        LoadingState.hide()
     }
 
     // 처음 한 번만 API 호출이 이루어지도록 설정
     if (!isPredictionComplete) {
         LaunchedEffect(features) {
             features?.let {
-                viewModel.fetchPrediction(it)
+                fastApiViewModel.fetchPrediction(it)
             }
         }
     }
@@ -201,23 +194,24 @@ fun PredictScreen(
     }
 
     when (uiState) {
-        is PredictionViewModel.UiState.Loading -> {
+        is FastApiViewModel.UiState.Loading -> {
             LoadingState.show()
         }
-        is PredictionViewModel.UiState.Success -> {
-            val diseaseName = (uiState as PredictionViewModel.UiState.Success).data
+        is FastApiViewModel.UiState.Success -> {
+            val diseaseName = (uiState as FastApiViewModel.UiState.Success).data
             Log.d("issuccess", diseaseName)
             // diseaseName을 UI에 반영하거나, 필요한 작업을 추가로 수행
             predictionDiseaseName = diseaseName
             // 예측 완료 후 isPredictionComplete 상태 변경
             isPredictionComplete = true
-            viewModel.fetchUIState(PredictionViewModel.UiState.Wait)
+            fastApiViewModel.fetchUIState(FastApiViewModel.UiState.Wait)
+            LoadingState.hide()
         }
-        is PredictionViewModel.UiState.Error -> {
-            val error = (uiState as PredictionViewModel.UiState.Error).message
+        is FastApiViewModel.UiState.Error -> {
+            val error = (uiState as FastApiViewModel.UiState.Error).message
             Text(text = "에러 발생: $error")
         }
-        is PredictionViewModel.UiState.Wait -> {
+        is FastApiViewModel.UiState.Wait -> {
 
         }
     }
@@ -372,7 +366,8 @@ fun PredictScreen(
                     isSaved = !isSaved
                 }) {
                     Icon(
-                        painter = painterResource(id = R.drawable.baseline_bookmark_border_24),
+                        painter = painterResource(
+                        id = if (isSaved) R.drawable.baseline_bookmark_24 else R.drawable.baseline_bookmark_border_24),
                         contentDescription = "saved",
                         tint = if (isSaved) blueColor5 else Color.Black
                     )

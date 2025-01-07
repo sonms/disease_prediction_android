@@ -163,8 +163,11 @@ fun SavedItem(
                    onStarClick(isClickStar!!)
                }
            ) {
-               Icon(painter = painterResource(id = R.drawable.baseline_star_border_24), contentDescription = "bookmark",
-                   tint = if (isClickStar!!) blueColor4 else Color.Black)
+               Icon(
+                   painter = painterResource(
+                   id = if (isClickStar!!) R.drawable.baseline_star_24 else R.drawable.baseline_star_border_24),
+                   contentDescription = "bookmark",
+               )
            }
         }
     }
