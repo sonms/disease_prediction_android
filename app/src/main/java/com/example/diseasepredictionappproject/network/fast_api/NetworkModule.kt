@@ -1,6 +1,7 @@
-package com.example.diseasepredictionappproject.network
+package com.example.diseasepredictionappproject.network.fast_api
 
 import com.example.diseasepredictionappproject.BuildConfig
+import com.example.diseasepredictionappproject.network.BaseUrlRetrofit
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -17,16 +18,18 @@ object NetworkModule {
 
     @Provides
     @Singleton
+    @BaseUrlRetrofit // Qualifier 추가
     fun provideRetrofit(): Retrofit {
         return Retrofit.Builder()
             .baseUrl(BASE_URL)
-            .addConverterFactory(GsonConverterFactory.create()) // JSON 직렬화/역직렬화
+            .addConverterFactory(GsonConverterFactory.create())
             .build()
     }
 
     @Provides
     @Singleton
-    fun provideApiService(retrofit: Retrofit): ApiService {
+    @BaseUrlRetrofit // Qualifier 추가
+    fun provideApiService(@BaseUrlRetrofit retrofit: Retrofit): ApiService {
         return retrofit.create(ApiService::class.java)
     }
 }

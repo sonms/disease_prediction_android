@@ -1,4 +1,4 @@
-package com.example.diseasepredictionappproject.network
+package com.example.diseasepredictionappproject.network.fast_api
 
 import com.example.diseasepredictionappproject.BuildConfig
 import okhttp3.OkHttpClient
@@ -6,7 +6,7 @@ import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
-object RetrofitClientForGov {
+object RetrofitClient {
     private const val BASE_URL = BuildConfig.BASE_URL// Emulator의 로컬 서버 주소
 
     private val loggingInterceptor = HttpLoggingInterceptor().apply {

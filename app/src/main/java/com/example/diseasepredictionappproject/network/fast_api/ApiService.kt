@@ -1,4 +1,4 @@
-package com.example.diseasepredictionappproject.network
+package com.example.diseasepredictionappproject.network.fast_api
 
 import com.example.diseasepredictionappproject.data.PredictionDiseaseResponse
 import com.example.diseasepredictionappproject.data.PredictionFeaturesData
