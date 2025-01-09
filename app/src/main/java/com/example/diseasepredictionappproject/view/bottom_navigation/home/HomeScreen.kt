@@ -35,6 +35,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.diseasepredictionappproject.data.HealthTipData
 import com.example.diseasepredictionappproject.room_db.PredictionEntity
+import com.example.diseasepredictionappproject.ui.theme.blueColor6
+import com.example.diseasepredictionappproject.ui.theme.blueColor7
 import com.example.diseasepredictionappproject.view.bottom_navigation.saved.DeleteItemDialog
 import com.example.diseasepredictionappproject.view.bottom_navigation.saved.SavedItem
 import com.example.diseasepredictionappproject.view_model.PredictionViewModel
@@ -86,7 +88,7 @@ fun HomeScreen( //건강관련팁, 질병정보검색, 최근예측결과요약
         mutableStateOf<HealthTipData?>(null)
     }
 
-    val predictionData by predictionViewModel.allPredictionsData.collectAsState(initial = emptyList())
+    val latestPredictionData by predictionViewModel.latestPredictionData.collectAsState(initial = null)
     val bookMarkedData by predictionViewModel.bookMarkedPredictionData.collectAsState(initial = emptyList())
     //검색창으로 이동
     /*LaunchedEffect(isSearchOpen) {
@@ -131,7 +133,7 @@ fun HomeScreen( //건강관련팁, 질병정보검색, 최근예측결과요약
         ) {
             //최근 예측결과 요약
             item {
-                RecentPredictionResult()
+                RecentPredictionResult(latestPredictionData)
             }
             //건강관련팁
             item {
@@ -180,7 +182,7 @@ fun HomeScreen( //건강관련팁, 질병정보검색, 최근예측결과요약
 }
 
 @Composable
-fun RecentPredictionResult() {
+fun RecentPredictionResult(latestPrediction : PredictionEntity?) {
     Column (
         modifier = Modifier
             .fillMaxWidth()
@@ -199,11 +201,15 @@ fun RecentPredictionResult() {
         Column (
             modifier = Modifier.wrapContentSize(),
         ) {
-            Text(text = "질병 이름", modifier = Modifier.padding(10.dp))
+            if (latestPrediction != null) {
+                Text(text = "최근 예측 질병 ${latestPrediction.diseaseName}", modifier = Modifier.padding(10.dp), color = blueColor7)
 
-            Text(text = "질병 간단요약", modifier = Modifier.padding(10.dp))
+                Text(text = "${latestPrediction.diseaseContent}", modifier = Modifier.padding(10.dp), color = blueColor7)
 
-            Text(text = "시행한 날짜", modifier = Modifier.padding(10.dp))
+                Text(text = "시행 날짜 : ${latestPrediction.createDate}", modifier = Modifier.padding(10.dp), color = blueColor7)
+            } else {
+                Text(text = "최근 예측 데이터가 없습니다.", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+            }
         }
     }
 }

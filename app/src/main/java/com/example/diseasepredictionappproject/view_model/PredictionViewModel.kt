@@ -14,8 +14,10 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import retrofit2.Call
 import retrofit2.Callback
@@ -35,6 +37,13 @@ class PredictionViewModel @Inject constructor(
     //모든 북마크 데이터
     val bookMarkedPredictionData = repository.getBookMarkPredictionData()
 
+    //가장 최근 데이터 1개 / flow는 현재상태 저장x 비동기 / stateflow는 항상 현재상태 가짐, 최신값 즉시 제공
+    val latestPredictionData: StateFlow<PredictionEntity?> =
+        repository.getLatestPredictionData()
+            .stateIn(viewModelScope, SharingStarted.Lazily, null) //Flow에서 방출된 마지막 값을 저장해 UI나 다른 구독자가 지금 상태를 참조할 수 있습니다.
+    //인수 1 viewModelScope를 사용하므로, ViewModel이 생존하는 동안만 Flow가 유지됩니다.
+    //인수 2 Flow가 구독을 시작하고 유지할 조건을 정의합니다. / StateFlow가 실제로 사용되기 전까지는 데이터를 방출하지 않음, 처음 구독자가 관찰을 시작할 때 Flow를 실행., 구독자 사라지면 종료
+    //인수 3 StateFlow가 값을 방출하기 전 기본값을 정의합니다.
 
     //---------------------------------------------------------------------------------
     @RequiresApi(Build.VERSION_CODES.O)

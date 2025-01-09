@@ -6,6 +6,11 @@ import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
 class PredictionRepository @Inject constructor(private val predictionDao: PredictionDao) {
+
+    fun getLatestPredictionData() : Flow<PredictionEntity?> {
+        return predictionDao.getLatestPrediction()
+    }
+
     //모든 저장된 예측데이터 가져오기
     fun getAllPredictionData(): Flow<List<PredictionEntity>> {
         return predictionDao.getPredictionList()

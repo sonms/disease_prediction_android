@@ -8,6 +8,10 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface PredictionDao {
+
+    @Query("SELECT * FROM PredictionTable ORDER BY createDate DESC LIMIT 1")
+    fun getLatestPrediction(): Flow<PredictionEntity?> // Flow 사용, 없을 경우 null 반환
+
     @Query("SELECT * FROM PredictionTable ORDER BY createDate DESC")
     fun getPredictionList(): Flow<List<PredictionEntity>> // Flow 사용
 
