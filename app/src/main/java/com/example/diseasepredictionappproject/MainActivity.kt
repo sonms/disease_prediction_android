@@ -32,6 +32,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.diseasepredictionappproject.loading.GlobalLoadingScreen
 import com.example.diseasepredictionappproject.ui.theme.DiseasePredictionAppProjectTheme
 import com.example.diseasepredictionappproject.ui.theme.blueColor5
 import com.example.diseasepredictionappproject.ui.theme.blueColor7
@@ -39,6 +40,7 @@ import com.example.diseasepredictionappproject.view.bottom_navigation.home.HomeS
 import com.example.diseasepredictionappproject.view.bottom_navigation.predict.PredictScreen
 import com.example.diseasepredictionappproject.view.bottom_navigation.saved.DetailScreen
 import com.example.diseasepredictionappproject.view.bottom_navigation.saved.SavedScreen
+import com.example.diseasepredictionappproject.view.bottom_navigation.saved.result.ResultScreen
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -48,7 +50,7 @@ class MainActivity : ComponentActivity() {
         val title: Int, val icon: Int, val screenRoute: String
     ) {
         data object Prediction : BottomNavItem(R.string.bottom_prediction, R.drawable.prediction_vector_icon, "prediction")
-        data object Saved : BottomNavItem(R.string.bottom_saved, R.drawable.baseline_bookmark_24, "bookmark")
+        data object Saved : BottomNavItem(R.string.bottom_saved, R.drawable.baseline_bookmark_border_24, "bookmark")
         data object Home : BottomNavItem(R.string.bottom_home, R.drawable.baseline_home_24, "home")
         data object Settings : BottomNavItem(R.string.bottom_settings, R.drawable.baseline_settings_24, "settings")
     }
@@ -63,6 +65,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
+                    GlobalLoadingScreen()
                     MainContent()
                 }
             }
@@ -179,16 +182,30 @@ fun NavigationGraph(navController: NavHostController) {
             //SettingScreen()
         }
 
+
         composable(
-            route = "detail?id={id}",
+            route = "detail?id={id}&type={type}&data={data}",
             arguments = listOf(
-                navArgument("id") { defaultValue = "-1" }
+                navArgument("id") { defaultValue = "-1" },
+                navArgument("type") { defaultValue = "disease" },
             )
         ) { backStackEntry ->
 
             val id = backStackEntry.arguments?.getString("id") ?: "-1"
+            val type = backStackEntry.arguments?.getString("type") ?: "disease"
 
-            DetailScreen(id = id.toLongOrNull(), navController)
+            DetailScreen(id = id.toLongOrNull(), type = type, navController)
+        }
+
+        composable(
+            route = "result",
+            /*arguments = listOf(
+                navArgument("drugInfo") { defaultValue = "" }
+            )*/
+        ) { _ ->
+
+            //val drugInfo = backStackEntry.arguments?.getString("drugInfo") ?: ""
+            ResultScreen(navController = navController)
         }
 
         /*composable(
