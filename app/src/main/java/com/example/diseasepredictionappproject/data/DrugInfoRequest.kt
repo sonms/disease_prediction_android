@@ -5,7 +5,7 @@ import com.google.gson.annotations.SerializedName
 data class DrugInfoRequest(
     @SerializedName("ServiceKey") val serviceKey: String, // 인증키
     @SerializedName("pageNo") val pageNo: Int? = 1, // 페이지 번호 (옵션)
-    @SerializedName("numOfRows") val numOfRows: Int? = 3, // 한 페이지 결과 수 (옵션)
+    @SerializedName("numOfRows") val numOfRows: Int? = 5, // 한 페이지 결과 수 (옵션)
     @SerializedName("entpName") val entpName: String? = null, // 업체명 (옵션)
     @SerializedName("itemName") val itemName: String? = null, // 제품명 (옵션)
     @SerializedName("itemSeq") val itemSeq: String? = null, // 품목기준코드 (옵션)

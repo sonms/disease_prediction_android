@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.diseasepredictionappproject.data.DrugInfoRequest
 import com.example.diseasepredictionappproject.data.DrugInfoResponse
+import com.example.diseasepredictionappproject.data.Item
 import com.example.diseasepredictionappproject.data.PredictionDiseaseResponse
 import com.example.diseasepredictionappproject.data.PredictionFeaturesData
 import com.example.diseasepredictionappproject.view_model.repository.OpenApiRepository
@@ -32,7 +33,7 @@ class OpenApiViewModel @Inject constructor(
     fun fetchDrugInfo(
         serviceKey: String,
         pageNo: Int? = 1,
-        numOfRows: Int? = 3,
+        numOfRows: Int? = 5,
         entpName: String? = null,
         itemName: String? = null,
         itemSeq: String? = null,
@@ -77,7 +78,7 @@ class OpenApiViewModel @Inject constructor(
                         if (response.isSuccessful) {
                             val responseData = response.body()
                             if (responseData != null) {
-                                _openApiUiState.value = OpenApiUiState.Success(responseData)
+                                _openApiUiState.value = OpenApiUiState.Success(responseData.body.items)
                             }
                         } else {
                             _openApiUiState.value = OpenApiUiState.Error("Error: ${response.code()}")
@@ -96,7 +97,7 @@ class OpenApiViewModel @Inject constructor(
 
     sealed class OpenApiUiState {
         data object Loading : OpenApiUiState()
-        data class Success(val data: DrugInfoResponse) : OpenApiUiState()
+        data class Success(val data: List<Item>) : OpenApiUiState()
         data class Error(val message: String) : OpenApiUiState()
         data object Wait : OpenApiUiState()
     }

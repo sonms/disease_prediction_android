@@ -4,11 +4,12 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
+import com.example.diseasepredictionappproject.data.Item
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface PredictionDao {
-
+    //질병
     @Query("SELECT * FROM PredictionTable ORDER BY createDate DESC LIMIT 1")
     fun getLatestPrediction(): Flow<PredictionEntity?> // Flow 사용, 없을 경우 null 반환
 

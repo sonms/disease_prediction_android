@@ -14,7 +14,7 @@ class OpenApiRepository @Inject constructor(
     fun getDrugInfoData(
         serviceKey: String,
         pageNo: Int? = 1,
-        numOfRows: Int? = 3,
+        numOfRows: Int? = 5,
         entpName: String? = null,
         itemName: String? = null,
         itemSeq: String? = null,

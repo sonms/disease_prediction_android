@@ -5,11 +5,8 @@ import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.diseasepredictionappproject.data.PredictionDiseaseResponse
-import com.example.diseasepredictionappproject.data.PredictionFeaturesData
 import com.example.diseasepredictionappproject.room_db.PredictionEntity
 import com.example.diseasepredictionappproject.view_model.repository.PredictionRepository
-import com.example.diseasepredictionappproject.view_model.repository.RetrofitFastApiRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -19,16 +16,12 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
 import java.time.YearMonth
 import javax.inject.Inject
 
 @HiltViewModel
 class PredictionViewModel @Inject constructor(
     private val repository: PredictionRepository,
-
 ) : ViewModel() {
 
     //모든 예측데이터
