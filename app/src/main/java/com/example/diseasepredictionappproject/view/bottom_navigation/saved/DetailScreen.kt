@@ -176,10 +176,22 @@ fun DetailItem(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            text = item?.diseaseName.toString(), fontWeight = FontWeight.Bold, fontSize = 18.sp,
-            modifier = Modifier.align(Alignment.CenterHorizontally)
-        )
+        Row (
+            modifier = Modifier
+                .fillMaxWidth()
+                .wrapContentHeight()
+                .padding(5.dp)
+        ) {
+            Text(
+                text = item?.diseaseName.toString(), fontWeight = FontWeight.Bold, fontSize = 18.sp,
+            )
+            
+            Spacer(modifier = Modifier.weight(1f))
+            
+            Text(
+                text = "카테고리 : 약 설명", fontWeight = FontWeight.Bold, fontSize = 18.sp,
+            )
+        }
 
         Text(text = item?.diseaseContent.toString())
 
@@ -213,11 +225,18 @@ fun DetailMedicineItem(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         item {
-            Text(
-                text = "${item?.entpName.toString()} ${item?.itemName.toString()}", fontWeight = FontWeight.Bold, fontSize = 18.sp,
-            )
+            Row {
+                Text(
+                    text = "${item?.entpName.toString()} ${item?.itemName.toString()}", fontWeight = FontWeight.Bold, fontSize = 18.sp,
+                )
+
+                Text(
+                    text = "카테고리 : 약 설명", fontWeight = FontWeight.Bold, fontSize = 18.sp,
+                )
+            }
 
             Spacer(modifier = Modifier.height(10.dp))
+
         }
 
         item {
