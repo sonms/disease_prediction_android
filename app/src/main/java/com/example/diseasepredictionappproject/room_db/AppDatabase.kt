@@ -12,11 +12,10 @@ import com.example.diseasepredictionappproject.room_db.medicine.MedicineDao
 import com.example.diseasepredictionappproject.room_db.medicine.MedicineEntity
 
 @RequiresApi(Build.VERSION_CODES.O)
-@Database(entities = [PredictionEntity::class, MedicineEntity::class], version = 1, exportSchema = false)
+@Database(entities = [PredictionEntity::class, MedicineEntity::class], version = 2, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun getPredictionDao(): PredictionDao
-
-    abstract fun getMedicineDao() : MedicineDao
+    abstract fun getMedicineDao(): MedicineDao
 
     companion object {
         @Volatile
@@ -26,9 +25,10 @@ abstract class AppDatabase : RoomDatabase() {
             Room.databaseBuilder(
                 context.applicationContext,
                 AppDatabase::class.java,
-                "disease-prediction-database"  // 데이터베이스 이름
+                "disease-prediction-database"
             )
-                //.fallbackToDestructiveMigration() // 마이그레이션 추가
+                //.fallbackToDestructiveMigration()
+                //.addMigrations(migration_1_2) // 마이그레이션 추가
                 .build()
 
         fun getInstance(context: Context): AppDatabase =
@@ -36,13 +36,13 @@ abstract class AppDatabase : RoomDatabase() {
                 INSTANCE ?: buildDatabase(context).also { INSTANCE = it }
             }
 
-        // 데이터베이스 버전 1에서 2로의 마이그레이션 정의
-        val MIGRATION_1_2 = object : Migration(1, 2) {
+
+        val migration_1_2 = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
-                // 기존 테이블에 'type' 컬럼 추가
-                db.execSQL("ALTER TABLE TodoDataTable ADD COLUMN type TEXT")
-                // 'eventDate' 컬럼 추가 (기존에는 없었다고 가정)
-                db.execSQL("ALTER TABLE TodoDataTable ADD COLUMN eventDate TEXT")
+                // isBookMark 컬럼 추가: BOOLEAN 타입으로 기본값 0(즉, false)
+                db.execSQL(
+                    "ALTER TABLE MedicineTable ADD COLUMN isBookMark INTEGER NOT NULL DEFAULT 0"
+                )
             }
         }
     }

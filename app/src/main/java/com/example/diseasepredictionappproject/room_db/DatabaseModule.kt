@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.room.Room
+import com.example.diseasepredictionappproject.room_db.medicine.MedicineDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -24,7 +25,7 @@ object DatabaseModule {
             AppDatabase::class.java,
             "disease-prediction-database"
         )
-            .addMigrations(AppDatabase.MIGRATION_1_2) // 마이그레이션 추가
+            .addMigrations(AppDatabase.migration_1_2) // 마이그레이션 추가
             .build()
     }
 
@@ -33,5 +34,12 @@ object DatabaseModule {
     @Provides
     fun providePredictionDao(database: AppDatabase): PredictionDao {
         return database.getPredictionDao()
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    @Singleton
+    @Provides
+    fun provideMedicineDao(database: AppDatabase): MedicineDao {
+        return database.getMedicineDao()
     }
 }
