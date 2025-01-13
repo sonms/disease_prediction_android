@@ -5,6 +5,8 @@ import androidx.annotation.RequiresApi
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -30,6 +32,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SecondaryScrollableTabRow
 import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -43,6 +46,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -93,103 +97,109 @@ fun SavedScreen(
 
     Column (
         modifier = Modifier
-            .fillMaxSize()
-            .padding(10.dp)
+            .fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        /*LazyColumn (
-            contentPadding = PaddingValues(vertical = 10.dp) // 각 항목 간 간격을 10dp로 설정
-        ) {
-            itemsIndexed(
-                items = allPredictionData
-            ) { _, item ->
-                SavedItem(
-                    item,
-                    onClick = {
-                        navController.navigate("detail?id=${item.id}")
-                    },
-                    onLongClick = {
-                        deleteItem = it
-                        isShow = !isShow
-                    },
-                    onStarClick = {
-                        *//*val bookMarkedData = PredictionEntity (
-                            diseaseName = item.diseaseName,
-                            diseaseContent = item.diseaseContent,
-                            isBookMark = !item.isBookMark!!,
-                            recommendMedication = ""
-                        )*//*
+        TabRow(
+            modifier = Modifier.fillMaxWidth(),
+            selectedTabIndex = tabIndex,
 
-                        viewModel.updateOnlySpecificData(id = item.id, isBookMark = !item.isBookMark!!)
-                    },
-                )
-            }
-        }*/
-        SecondaryScrollableTabRow(selectedTabIndex = tabIndex) {
+        ) {
             tabs.forEachIndexed { index, value ->
-                Tab(selected = tabIndex == index,
+                Tab(
+                    modifier = Modifier.weight(1f),
+                    selected = tabIndex == index,
                     onClick = {
                         coroutineScope.launch {
                             pagerState.animateScrollToPage(index)
                         }
                     }
                 ) {
-                    Text(
-                        text = value,
-                        modifier = Modifier.padding(16.dp)
-                    )
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center // Text를 가운데 정렬
+                    ) {
+                        Text(
+                            text = value,
+                            modifier = Modifier.padding(16.dp)
+                        )
+                    }
                 }
             }
         }
-        HorizontalPager(state = pagerState, userScrollEnabled = true) {page ->
-            val currentData = when (page) {
-                0 -> allPredictionData // "질병" 탭
-                1 -> allMedicineData    // "약" 탭
-                else -> emptyList()
-            }
-
-            LazyColumn (
-                contentPadding = PaddingValues(vertical = 10.dp) // 각 항목 간 간격을 10dp로 설정
+        HorizontalPager(
+            state = pagerState,
+            userScrollEnabled = true,
+            modifier = Modifier
+                .fillMaxSize()
+                .align(Alignment.CenterHorizontally),
+        ) {page ->
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center // 페이저 내용을 가운데 정렬
             ) {
-                itemsIndexed(
-                    items = currentData
-                ) { _, item ->
-                    when (page) {
-                        0 -> { // "질병" 탭에서의 아이템
-                            SavedItem(
-                                item as PredictionEntity,
-                                onClick = {
-                                    navController.navigate("detail?id=${item.id}")
-                                },
-                                onLongClick = {
-                                    deleteItem = it
-                                    isShow = !isShow
-                                },
-                                onStarClick = {
-                                    viewModel.updateOnlySpecificData(
-                                        id = item.id,
-                                        isBookMark = !(item.isBookMark ?: false)
+                val currentData = when (page) {
+                    0 -> allPredictionData
+                    1 -> allMedicineData
+                    else -> emptyList()
+                }
+
+                if (currentData.isEmpty()) {
+                    Text(
+                        text = when (page) {
+                            0 -> "저장한 질병 데이터가 존재하지 않습니다."
+                            1 -> "저장한 약 데이터가 존재하지 않습니다."
+                            else -> ""
+                        },
+                        textAlign = TextAlign.Center // 텍스트 가운데 정렬
+                    )
+                } else {
+                    LazyColumn(
+                        contentPadding = PaddingValues(vertical = 10.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally // LazyColumn 내용 가운데 정렬
+                    ) {
+                        itemsIndexed(
+                            items = currentData
+                        ) { _, item ->
+                            when (page) {
+                                0 -> { // "질병" 탭에서의 아이템
+                                    SavedItem(
+                                        item as PredictionEntity,
+                                        onClick = {
+                                            navController.navigate("detail?id=${item.id}")
+                                        },
+                                        onLongClick = {
+                                            deleteItem = it
+                                            isShow = !isShow
+                                        },
+                                        onStarClick = {
+                                            viewModel.updateOnlySpecificData(
+                                                id = item.id,
+                                                isBookMark = !(item.isBookMark ?: false)
+                                            )
+                                        }
                                     )
                                 }
-                            )
-                        }
-                        1 -> { // "약" 탭에서의 아이템
-                            MedicineItem(
-                                data = item as MedicineEntity, // 타입 캐스팅 필요
-                                isChecked = false,
-                                onClick = {
-                                    navController.navigate("detail?type=medicine&data=${item}")
-                                },
-                                onLongClick = { delete ->
-                                    // 체크 로직 추가 가능
-                                    deleteMedicineItem = delete
-                                },
-                                onCheckClick = {
-                                    medicineViewModel.updateOnlySpecificMedicineData(
-                                        id = item.id,
-                                        isBookMark = !(item.isBookMark ?: false)
+                                1 -> { // "약" 탭에서의 아이템
+                                    MedicineItem(
+                                        data = item as MedicineEntity, // 타입 캐스팅 필요
+                                        isChecked = false,
+                                        onClick = {
+                                            navController.navigate("detail?type=medicine&data=${item}")
+                                        },
+                                        onLongClick = { delete ->
+                                            // 체크 로직 추가 가능
+                                            deleteMedicineItem = delete
+                                        },
+                                        onCheckClick = {
+                                            medicineViewModel.updateOnlySpecificMedicineData(
+                                                id = item.id,
+                                                isBookMark = !(item.isBookMark ?: false)
+                                            )
+                                        }
                                     )
                                 }
-                            )
+                            }
                         }
                     }
                 }

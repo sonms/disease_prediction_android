@@ -189,7 +189,7 @@ fun DetailItem(
             Spacer(modifier = Modifier.weight(1f))
             
             Text(
-                text = "카테고리 : 약 설명", fontWeight = FontWeight.Bold, fontSize = 18.sp,
+                text = "카테고리 : 질병 설명", fontWeight = FontWeight.Bold, fontSize = 18.sp,
             )
         }
 
