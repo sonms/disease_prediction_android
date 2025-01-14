@@ -132,7 +132,8 @@ fun SavedScreen(
             userScrollEnabled = true,
             modifier = Modifier
                 .fillMaxSize()
-                .align(Alignment.CenterHorizontally),
+                .align(Alignment.CenterHorizontally)
+                .padding(10.dp),
         ) {page ->
             Box(
                 modifier = Modifier.fillMaxSize(),
@@ -155,8 +156,8 @@ fun SavedScreen(
                     )
                 } else {
                     LazyColumn(
+                        modifier = Modifier.align(Alignment.TopCenter),
                         contentPadding = PaddingValues(vertical = 10.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally // LazyColumn 내용 가운데 정렬
                     ) {
                         itemsIndexed(
                             items = currentData
@@ -181,11 +182,52 @@ fun SavedScreen(
                                     )
                                 }
                                 1 -> { // "약" 탭에서의 아이템
+                                    var formatItem : Item?
+
+                                    (item as MedicineEntity).let {
+                                        formatItem = Item (
+                                            /*
+                                            val entpName: String?,
+                                            val itemName: String?,
+                                            val itemSeq: String?,
+                                            val efcyQesitm: String?,
+                                            val useMethodQesitm: String?,
+                                            val atpnWarnQesitm: String?,
+                                            val atpnQesitm: String?,
+                                            val intrcQesitm: String?,
+                                            val seQesitm: String?,
+                                            val depositMethodQesitm: String?,
+                                            val openDe: String?,
+                                            val updateDe: String?,
+                                            val itemImage: String?,
+                                            val bizrno: String?*/
+                                            entpName = it.entpName,
+                                            itemName = it.itemName,
+                                            itemSeq = it.itemSeq,
+                                            efcyQesitm = it.efcyQesitm,
+                                            useMethodQesitm = it.useMethodQesitm,
+                                            atpnWarnQesitm = it.atpnWarnQesitm,
+                                            atpnQesitm = it.atpnQesitm,
+                                            intrcQesitm = it.intrcQesitm,
+                                            seQesitm = it.seQesitm,
+                                            depositMethodQesitm = it.depositMethodQesitm,
+                                            openDe = it.openDe,
+                                            updateDe = it.updateDe,
+                                            itemImage = it.itemImage,
+                                            bizrno = it.bizrno
+                                        )
+                                    }
+
                                     MedicineItem(
                                         data = item as MedicineEntity, // 타입 캐스팅 필요
                                         isChecked = false,
                                         onClick = {
-                                            navController.navigate("detail?type=medicine&data=${item}")
+                                            navController.navigate("detail?type=medicine")
+                                            formatItem?.let { it1 ->
+                                                medicineViewModel.updateMedicineMoveData(
+                                                    it1
+                                                )
+                                            }
                                         },
                                         onLongClick = { delete ->
                                             // 체크 로직 추가 가능
@@ -208,16 +250,35 @@ fun SavedScreen(
     }
 
     if (isShow) {
-        DeleteItemDialog(deleteItem,
-            onConfirmClick = {
-                isShow = !isShow
-                it?.let {
-                    viewModel.deletePredictionData(it)
-                }
-            },
-            onCancelClick = {
-                isShow = !isShow
-            })
+        if (deleteItem != null) {
+            DeleteItemDialog(deleteItem,
+                onConfirmClick = {
+                    isShow = !isShow
+                    it?.let {
+                        viewModel.deletePredictionData(it)
+                    }
+                    deleteMedicineItem = null
+                },
+                onCancelClick = {
+                    isShow = !isShow
+                    deleteMedicineItem = null
+                })
+        }
+
+        if (deleteMedicineItem != null) {
+            DeleteMedicineItemDialog(deleteMedicineItem,
+                onConfirmClick = {
+                    isShow = !isShow
+                    it?.let {
+                        medicineViewModel.deleteMedicineData(it)
+                    }
+                    deleteMedicineItem = null
+                },
+                onCancelClick = {
+                    isShow = !isShow
+                    deleteMedicineItem = null
+                })
+        }
     }
 }
 
@@ -360,6 +421,59 @@ fun MedicineItem(
 fun DeleteItemDialog(
     item : PredictionEntity?,
     onConfirmClick : (PredictionEntity?) -> Unit,
+    onCancelClick : () -> Unit
+) {
+    Dialog(
+        onDismissRequest = { onCancelClick() }
+    ) {
+        Card (
+            modifier = Modifier
+                .width(320.dp)
+                .wrapContentHeight()
+                .padding(10.dp),
+            shape = RoundedCornerShape(8.dp),
+        ) {
+            Text(
+                modifier = Modifier.padding(top = 20.dp, start = 20.dp, bottom = 10.dp),
+                text = "정말 삭제하시겠습니까?",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+
+            Row (
+                modifier = Modifier
+                    .align(Alignment.End)
+                    .padding(20.dp)
+            ) {
+                Button(
+                    modifier = Modifier.padding(end = 5.dp),
+                    onClick = { onCancelClick() },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = blueColor4, // 버튼 배경색
+                        contentColor = Color.White // 텍스트 색상 설정
+                    ),
+                ) {
+                    Text(text = "취소")
+                }
+
+                Button(
+                    onClick = { onConfirmClick(item) },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = blueColor4, // 버튼 배경색
+                        contentColor = Color.White // 텍스트 색상 설정
+                    ),
+                ) {
+                    Text(text = "확인")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun DeleteMedicineItemDialog(
+    item : MedicineEntity?,
+    onConfirmClick : (MedicineEntity?) -> Unit,
     onCancelClick : () -> Unit
 ) {
     Dialog(

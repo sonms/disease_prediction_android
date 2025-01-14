@@ -45,6 +45,7 @@ import com.example.diseasepredictionappproject.ui.theme.blueColor4
 import com.example.diseasepredictionappproject.view_model.MedicineViewModel
 import com.example.diseasepredictionappproject.view_model.OpenApiViewModel
 import com.example.diseasepredictionappproject.view_model.PredictionViewModel
+import kotlinx.coroutines.delay
 
 @Composable
 fun DetailScreen(
@@ -82,14 +83,19 @@ fun DetailScreen(
         }
     }
 
+    LaunchedEffect(movedMedicineData) {
+        Log.e("movedMedicineData", movedMedicineData.toString())
+    }
+
     when (openApiUiState) {
         is OpenApiViewModel.OpenApiUiState.Loading -> {
             LoadingState.show()
         }
         is OpenApiViewModel.OpenApiUiState.Success -> {
             val drugInfo = (openApiUiState as OpenApiViewModel.OpenApiUiState.Success).data
-            Log.e("drugInfo", drugInfo.toString())
+            //Log.e("drugInfo", drugInfo.toString())
             medicineViewModel.updateMedicineResultData(drugInfo)
+
             openApiViewModel.fetchOpenApiUIState(OpenApiViewModel.OpenApiUiState.Wait)
 
             navController.navigate("result")
