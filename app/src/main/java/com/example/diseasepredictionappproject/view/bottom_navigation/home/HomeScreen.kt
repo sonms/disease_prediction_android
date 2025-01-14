@@ -1,5 +1,7 @@
 package com.example.diseasepredictionappproject.view.bottom_navigation.home
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -20,6 +22,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -34,11 +37,16 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.diseasepredictionappproject.data.HealthTipData
+import com.example.diseasepredictionappproject.data.Item
 import com.example.diseasepredictionappproject.room_db.PredictionEntity
+import com.example.diseasepredictionappproject.room_db.medicine.MedicineEntity
 import com.example.diseasepredictionappproject.ui.theme.blueColor6
 import com.example.diseasepredictionappproject.ui.theme.blueColor7
 import com.example.diseasepredictionappproject.view.bottom_navigation.saved.DeleteItemDialog
+import com.example.diseasepredictionappproject.view.bottom_navigation.saved.DeleteMedicineItemDialog
+import com.example.diseasepredictionappproject.view.bottom_navigation.saved.MedicineItem
 import com.example.diseasepredictionappproject.view.bottom_navigation.saved.SavedItem
+import com.example.diseasepredictionappproject.view_model.MedicineViewModel
 import com.example.diseasepredictionappproject.view_model.PredictionViewModel
 
 
@@ -75,10 +83,12 @@ fun getHealthTips(): List<HealthTipData> {
     )
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun HomeScreen( //건강관련팁, 질병정보검색, 최근예측결과요약
     navController : NavController,
-    predictionViewModel: PredictionViewModel = hiltViewModel()
+    predictionViewModel: PredictionViewModel = hiltViewModel(),
+    medicineViewModel: MedicineViewModel = hiltViewModel()
 ) {
     var isSearchOpen by remember {
         mutableStateOf(false)
@@ -90,6 +100,14 @@ fun HomeScreen( //건강관련팁, 질병정보검색, 최근예측결과요약
 
     val latestPredictionData by predictionViewModel.latestPredictionData.collectAsState(initial = null)
     val bookMarkedData by predictionViewModel.bookMarkedPredictionData.collectAsState(initial = emptyList())
+    val bookMarkedMedicineData by medicineViewModel.bookMarkedMedicineData.collectAsState(initial = emptyList())
+
+    val allBookMarkedData by remember (bookMarkedData, bookMarkedMedicineData) {
+        derivedStateOf {
+            bookMarkedData + bookMarkedMedicineData
+        }
+    }
+
     //검색창으로 이동
     /*LaunchedEffect(isSearchOpen) {
         navController
@@ -100,6 +118,9 @@ fun HomeScreen( //건강관련팁, 질병정보검색, 최근예측결과요약
     }
     var deleteItem by remember {
         mutableStateOf<PredictionEntity?>(null)
+    }
+    var deleteMedicineItem by remember {
+        mutableStateOf<MedicineEntity?>(null)
     }
 
     LaunchedEffect(Unit) {
@@ -141,43 +162,132 @@ fun HomeScreen( //건강관련팁, 질병정보검색, 최근예측결과요약
             }
 
             //북마크 데이터 보여주기
-            if (bookMarkedData.isEmpty()) {
+            if (allBookMarkedData.isEmpty()) {
                 item {
                     Text(text = "북마크한 데이터가 없습니다.")
                 }
             } else {
                 itemsIndexed (
-                    items = bookMarkedData
+                    items = allBookMarkedData
                 ) {_, bookMarkItem ->
-                    SavedItem(
-                        data = bookMarkItem,
-                        onClick = {
-                            navController.navigate("detail?id=${bookMarkItem.id}")
-                        },
-                        onLongClick = {
-                            deleteItem = it
-                            isShow = !isShow
-                        },
-                        onStarClick = {
-                            predictionViewModel.updateOnlySpecificData(id = bookMarkItem.id, isBookMark = !bookMarkItem.isBookMark!!)
-                        },
-                    )
+                    when (bookMarkItem) {
+                        is PredictionEntity -> {
+                            // PredictionEntity 타입의 데이터 처리
+                            SavedItem(
+                                data = bookMarkItem as PredictionEntity,
+                                onClick = {
+                                    navController.navigate("detail?id=${bookMarkItem.id}")
+                                },
+                                onLongClick = {
+                                    deleteItem = it
+                                    isShow = !isShow
+                                },
+                                onStarClick = {
+                                    predictionViewModel.updateOnlySpecificData(id = bookMarkItem.id, isBookMark = !bookMarkItem.isBookMark!!)
+                                },
+                            )
+                        }
+                        is MedicineEntity -> {
+                            // MedicineItem 타입의 데이터 처리
+                            var formatItem : Item?
+
+                            (bookMarkItem as MedicineEntity).let {
+                                formatItem = Item (
+                                    /*
+                                    val entpName: String?,
+                                    val itemName: String?,
+                                    val itemSeq: String?,
+                                    val efcyQesitm: String?,
+                                    val useMethodQesitm: String?,
+                                    val atpnWarnQesitm: String?,
+                                    val atpnQesitm: String?,
+                                    val intrcQesitm: String?,
+                                    val seQesitm: String?,
+                                    val depositMethodQesitm: String?,
+                                    val openDe: String?,
+                                    val updateDe: String?,
+                                    val itemImage: String?,
+                                    val bizrno: String?*/
+                                    entpName = it.entpName,
+                                    itemName = it.itemName,
+                                    itemSeq = it.itemSeq,
+                                    efcyQesitm = it.efcyQesitm,
+                                    useMethodQesitm = it.useMethodQesitm,
+                                    atpnWarnQesitm = it.atpnWarnQesitm,
+                                    atpnQesitm = it.atpnQesitm,
+                                    intrcQesitm = it.intrcQesitm,
+                                    seQesitm = it.seQesitm,
+                                    depositMethodQesitm = it.depositMethodQesitm,
+                                    openDe = it.openDe,
+                                    updateDe = it.updateDe,
+                                    itemImage = it.itemImage,
+                                    bizrno = it.bizrno
+                                )
+                            }
+
+                            MedicineItem(
+                                data = bookMarkItem as MedicineEntity, // 타입 캐스팅 필요
+                                isChecked = false,
+                                onClick = {
+                                    navController.navigate("detail?type=medicine")
+                                    formatItem?.let { it1 ->
+                                        medicineViewModel.updateMedicineMoveData(
+                                            it1
+                                        )
+                                    }
+                                },
+                                onLongClick = { delete ->
+                                    // 체크 로직 추가 가능
+                                    deleteMedicineItem = delete
+                                },
+                                onCheckClick = {
+                                    medicineViewModel.updateOnlySpecificMedicineData(
+                                        id = bookMarkItem.id,
+                                        isBookMark = !(bookMarkItem.isBookMark ?: false)
+                                    )
+                                }
+                            )
+                        }
+                        else -> {
+                            // 기타 데이터 타입 처리 (필요에 따라 추가)
+                            Text("Unknown Item Type")
+                        }
+                    }
                 }
             }
         }
     }
 
     if (isShow) {
-        DeleteItemDialog(deleteItem,
-            onConfirmClick = {
-                isShow = !isShow
-                it?.let {
-                    predictionViewModel.deletePredictionData(it)
-                }
-            },
-            onCancelClick = {
-                isShow = !isShow
-            })
+        if (deleteItem != null) {
+            DeleteItemDialog(deleteItem,
+                onConfirmClick = {
+                    isShow = !isShow
+                    it?.let {
+                        predictionViewModel.deletePredictionData(it)
+                    }
+                    deleteMedicineItem = null
+                },
+                onCancelClick = {
+                    isShow = !isShow
+                    deleteMedicineItem = null
+                })
+        }
+
+        if (deleteMedicineItem != null) {
+            DeleteMedicineItemDialog(deleteMedicineItem,
+                onConfirmClick = {
+                    isShow = !isShow
+                    it?.let {
+                        medicineViewModel.deleteMedicineData(it)
+                    }
+                    deleteMedicineItem = null
+                },
+                onCancelClick = {
+                    isShow = !isShow
+                    deleteMedicineItem = null
+                })
+        }
     }
 }
 
@@ -202,7 +312,7 @@ fun RecentPredictionResult(latestPrediction : PredictionEntity?) {
             modifier = Modifier.wrapContentSize(),
         ) {
             if (latestPrediction != null) {
-                Text(text = "최근 예측 질병 ${latestPrediction.diseaseName}", modifier = Modifier.padding(10.dp), color = blueColor7)
+                Text(text = "최근 예측 질병 : ${latestPrediction.diseaseName}", modifier = Modifier.padding(10.dp), color = blueColor7)
 
                 Text(text = "${latestPrediction.diseaseContent}", modifier = Modifier.padding(10.dp), color = blueColor7)
 
