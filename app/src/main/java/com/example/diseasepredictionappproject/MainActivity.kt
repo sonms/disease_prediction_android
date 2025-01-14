@@ -25,6 +25,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -41,6 +42,7 @@ import com.example.diseasepredictionappproject.view.bottom_navigation.predict.Pr
 import com.example.diseasepredictionappproject.view.bottom_navigation.saved.DetailScreen
 import com.example.diseasepredictionappproject.view.bottom_navigation.saved.SavedScreen
 import com.example.diseasepredictionappproject.view.bottom_navigation.saved.result.ResultScreen
+import com.example.diseasepredictionappproject.view_model.MedicineViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -166,7 +168,10 @@ fun BottomNavigation(navController: NavController) {
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun NavigationGraph(navController: NavHostController) {
+fun NavigationGraph(
+    navController: NavHostController,
+    medicineViewModel: MedicineViewModel = hiltViewModel()
+) {
     NavHost(navController = navController, startDestination = MainActivity.BottomNavItem.Home.screenRoute) {
         composable(MainActivity.BottomNavItem.Home.screenRoute) {
             HomeScreen(navController)
@@ -193,8 +198,7 @@ fun NavigationGraph(navController: NavHostController) {
 
             val id = backStackEntry.arguments?.getString("id") ?: "-1"
             val type = backStackEntry.arguments?.getString("type") ?: "disease"
-
-            DetailScreen(id = id.toLongOrNull(), type = type, navController)
+            DetailScreen(id = id.toLongOrNull(), type = type, navController, medicineViewModel = medicineViewModel)
         }
 
         composable(
@@ -205,7 +209,7 @@ fun NavigationGraph(navController: NavHostController) {
         ) { _ ->
 
             //val drugInfo = backStackEntry.arguments?.getString("drugInfo") ?: ""
-            ResultScreen(navController = navController)
+            ResultScreen(navController = navController,  medicineViewModel = medicineViewModel)
         }
 
         /*composable(

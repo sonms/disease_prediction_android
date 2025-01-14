@@ -1,8 +1,13 @@
 package com.example.diseasepredictionappproject.view_model
 
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.switchMap
 import androidx.lifecycle.viewModelScope
 import com.example.diseasepredictionappproject.data.Item
 import com.example.diseasepredictionappproject.room_db.PredictionEntity
@@ -11,12 +16,13 @@ import com.example.diseasepredictionappproject.view_model.repository.MedicineRep
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class MedicineViewModel @Inject constructor(
-    private val repo : MedicineRepository
+    private val repo : MedicineRepository,
 ) : ViewModel() {
     //모든 데이터
     val allMedicineData = repo.getAllMedicineData()
@@ -26,25 +32,26 @@ class MedicineViewModel @Inject constructor(
 
 
     //약 추천 결과값 관찰용
-    private val _medicineResultData = MutableStateFlow<List<Item?>>(emptyList())
+    private val _medicineResultData = MutableStateFlow<List<Item>>(emptyList())
+    val medicineResultData: StateFlow<List<Item>> = _medicineResultData.asStateFlow()
 
-    // 외부에서 읽기 전용 StateFlow로 노출
-    val medicineResultData: StateFlow<List<Item?>> get() = _medicineResultData
-
-    // 데이터 갱신 함수
     fun updateMedicineResultData(data: List<Item>) {
-        _medicineResultData.value = data
+        viewModelScope.launch {
+            _medicineResultData.value = data
+        }
     }
 
     //약 데이터 이동 관찰용
     private val _medicineMoveData = MutableStateFlow<Item?>(null)
 
     // 외부에서 읽기 전용 StateFlow로 노출
-    val medicineMoveData: StateFlow<Item?> get() = _medicineMoveData
+    val medicineMoveData: StateFlow<Item?> = _medicineMoveData.asStateFlow()
 
     // 데이터 갱신 함수
     fun updateMedicineMoveData(data: Item) {
-        _medicineMoveData.value = data
+       viewModelScope.launch {
+           _medicineMoveData.value = data
+       }
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -93,7 +100,4 @@ class MedicineViewModel @Inject constructor(
             repo.deleteMedicineDataById(medicineEntity.id)
         }
     }
-
-
-
 }
