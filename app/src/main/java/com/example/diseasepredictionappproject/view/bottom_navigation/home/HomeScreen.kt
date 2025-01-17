@@ -191,7 +191,7 @@ fun HomeScreen( //건강관련팁, 질병정보검색, 최근예측결과요약
                             // MedicineItem 타입의 데이터 처리
                             var formatItem : Item?
 
-                            (bookMarkItem as MedicineEntity).let {
+                            (bookMarkItem).let {
                                 formatItem = Item (
                                     /*
                                     val entpName: String?,
