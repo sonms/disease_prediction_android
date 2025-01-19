@@ -51,6 +51,7 @@ import com.example.diseasepredictionappproject.ui.theme.DiseasePredictionAppProj
 import com.example.diseasepredictionappproject.ui.theme.blueColor5
 import com.example.diseasepredictionappproject.ui.theme.blueColor7
 import com.example.diseasepredictionappproject.view.bottom_navigation.home.HomeScreen
+import com.example.diseasepredictionappproject.view.bottom_navigation.pill_predict.PillPredictScreen
 import com.example.diseasepredictionappproject.view.bottom_navigation.predict.PredictScreen
 import com.example.diseasepredictionappproject.view.bottom_navigation.saved.DetailScreen
 import com.example.diseasepredictionappproject.view.bottom_navigation.saved.SavedScreen
@@ -68,7 +69,7 @@ class MainActivity : ComponentActivity() {
         data object Saved : BottomNavItem(R.string.bottom_saved, R.drawable.baseline_bookmark_border_24, "bookmark")
         data object Home : BottomNavItem(R.string.bottom_home, R.drawable.baseline_home_24, "home")
         data object Settings : BottomNavItem(R.string.bottom_settings, R.drawable.baseline_settings_24, "settings")
-        data object PillPredictionCamera : BottomNavItem(R.string.bottom_center, R.drawable.baseline_photo_camera_24, "pill")
+        data object PillPredictionCamera : BottomNavItem(R.string.bottom_center, R.drawable.baseline_camera_24, "pill")
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -239,13 +240,13 @@ fun BottomNavigation(navController: NavController) {
             },
             containerColor = blueColor5,
             modifier = Modifier
-                .size(64.dp)
+                .wrapContentSize()
                 .align(Alignment.TopCenter)
                 .offset(y = (-20).dp),
             shape = RoundedCornerShape(36.dp)
         ) {
             Icon(
-                painter = painterResource(id = R.drawable.baseline_photo_camera_24),
+                painter = painterResource(id = R.drawable.baseline_camera_24),
                 contentDescription = "Center Button",
                 tint = Color.White
             )
@@ -267,7 +268,7 @@ fun NavigationGraph(
             PredictScreen()
         }
         composable(MainActivity.BottomNavItem.PillPredictionCamera.screenRoute) {
-
+            PillPredictScreen(navController = navController)
         }
         composable(MainActivity.BottomNavItem.Saved.screenRoute) {
             //CalendarScreen(navController)
