@@ -117,6 +117,105 @@ fun PillPredictScreen(
                 }
             }
         }
+
+
+        Column (
+            modifier = Modifier
+                .padding(20.dp)
+                .fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Box (
+                modifier = Modifier
+                    .background(Color.LightGray, RoundedCornerShape(24.dp))
+                    .aspectRatio(16f / 9f)
+                    .fillMaxWidth(0.8f)
+                    .weight(1f)
+                    .wrapContentHeight(),
+                contentAlignment = Alignment.Center
+            ) {
+                if (isImageSelected && selectedImage != null) {
+                    selectedImage?.let {
+                        AsyncImage(
+                            model = it,
+                            contentDescription = null,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(RoundedCornerShape(24.dp)),
+                            contentScale = ContentScale.Fit
+                        )
+                    }
+                } else {
+                    Row {
+                        Icon(painter = painterResource(id = R.drawable.baseline_image_24), contentDescription = "camera")
+
+                        Text(text = "예측할 이미지")
+                    }
+                }
+            }
+            
+            Spacer(modifier = Modifier.weight(1f))
+
+            if (hasPermissions) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(5.dp),
+                    //horizontalArrangement = Arrangement.spacedBy(8.dp) // 버튼 간 간격 설정
+                ) {
+                    // 카메라 버튼
+                    OpenCameraOrAlbum(
+                        value = R.drawable.baseline_photo_camera_24,
+                        index = 0,
+                        onImageSelected = { uri ->
+                            isImageSelected = true
+                            selectedImage = uri
+                        }
+                    )
+                    
+                    Spacer(modifier = Modifier.weight(1f))
+
+                    // 앨범 버튼
+                    OpenCameraOrAlbum(
+                        value = R.drawable.baseline_photo_album_24,
+                        index = 1,
+                        onImageSelected = { uri ->
+                            isImageSelected = true
+                            selectedImage = uri
+                        }
+                    )
+                }
+            } else {
+                Box(
+                    modifier = Modifier
+                        .background(Color.LightGray, RoundedCornerShape(24.dp))
+                        .wrapContentSize()
+                        .padding(10.dp)
+                        .weight(1f),
+                        /*.aspectRatio(16f / 9f)
+                        .fillMaxWidth(0.8f)
+                        .wrapContentHeight(),*/
+                    contentAlignment = Alignment.Center
+                ) {
+                    Row {
+                        Icon(
+                            modifier = Modifier
+                                .wrapContentSize()
+                                .padding(end = 5.dp, start = 10.dp),
+                            painter = painterResource(id = R.drawable.baseline_warning_24),
+                            tint = Color.Yellow,
+                            contentDescription = "warning message"
+                        )
+
+                        Text(
+                            text = "설정에서 카메라와 갤러리 접근 권한을 허용해주세요.",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+        }
     }
 }
 
