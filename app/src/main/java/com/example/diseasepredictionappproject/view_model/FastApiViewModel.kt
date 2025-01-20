@@ -1,9 +1,12 @@
 package com.example.diseasepredictionappproject.view_model
 
+import android.content.Context
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.diseasepredictionappproject.data.PredictionDiseaseResponse
 import com.example.diseasepredictionappproject.data.PredictionFeaturesData
+import com.example.diseasepredictionappproject.data.PredictionImageResponse
 import com.example.diseasepredictionappproject.view_model.repository.RetrofitFastApiRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -57,6 +60,43 @@ class FastApiViewModel @Inject constructor (
                     }
                 })
             } catch (e: Exception) {
+                _uiState.value = UiState.Error("Exception: ${e.message}")
+            }
+        }
+    }
+
+
+    //image로 pill 예측
+    fun fetchPillPrediction(image : Uri, context : Context) {
+        viewModelScope.launch {
+            try {
+                val call = retrofitRepository.postImagePredictionPill(image, context)
+
+                call.enqueue(object : Callback<PredictionImageResponse> {
+                    override fun onResponse(
+                        call: Call<PredictionImageResponse>,
+                        response: Response<PredictionImageResponse>
+                    ) {
+                        if (response.isSuccessful) {
+                            val pillName = response.body()?.predictionPillName
+                            if (pillName != null) {
+                                // Success 상태가 여러 번 호출되지 않도록 보장
+                                if (_uiState.value !is UiState.Success) {
+                                    _uiState.value = UiState.Success(pillName)
+                                }
+                            } else {
+                                _uiState.value = UiState.Error("예측된 결과가 존재하지 않습니다. 다시 시도해주세요.")
+                            }
+                        } else {
+                            _uiState.value = UiState.Error("Error: ${response.code()}")
+                        }
+                    }
+
+                    override fun onFailure(call: Call<PredictionImageResponse>, t: Throwable) {
+                        _uiState.value = UiState.Error("Failure: ${t.message}")
+                    }
+                })
+            } catch (e : Exception) {
                 _uiState.value = UiState.Error("Exception: ${e.message}")
             }
         }

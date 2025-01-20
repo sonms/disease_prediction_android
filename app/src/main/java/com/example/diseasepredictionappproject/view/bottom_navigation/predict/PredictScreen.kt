@@ -2,6 +2,7 @@ package com.example.diseasepredictionappproject.view.bottom_navigation.predict
 
 import android.os.Build
 import android.util.Log
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -198,18 +199,22 @@ fun PredictScreen(
             LoadingState.show()
         }
         is FastApiViewModel.UiState.Success -> {
-            val diseaseName = (uiState as FastApiViewModel.UiState.Success).data
-            Log.d("issuccess", diseaseName)
-            // diseaseName을 UI에 반영하거나, 필요한 작업을 추가로 수행
-            predictionDiseaseName = diseaseName
-            // 예측 완료 후 isPredictionComplete 상태 변경
-            isPredictionComplete = true
-            fastApiViewModel.fetchUIState(FastApiViewModel.UiState.Wait)
-            LoadingState.hide()
+            try {
+                val diseaseName = (uiState as FastApiViewModel.UiState.Success).data
+                Log.d("issuccess", diseaseName)
+                // diseaseName을 UI에 반영하거나, 필요한 작업을 추가로 수행
+                predictionDiseaseName = diseaseName
+                // 예측 완료 후 isPredictionComplete 상태 변경
+                isPredictionComplete = true
+                fastApiViewModel.fetchUIState(FastApiViewModel.UiState.Wait)
+                LoadingState.hide()
+            } catch (e : Exception) {
+                fastApiViewModel.fetchUIState(FastApiViewModel.UiState.Wait)
+            }
         }
         is FastApiViewModel.UiState.Error -> {
             val error = (uiState as FastApiViewModel.UiState.Error).message
-            Text(text = "에러 발생: $error")
+            Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
         }
         is FastApiViewModel.UiState.Wait -> {
 

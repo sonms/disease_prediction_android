@@ -4,9 +4,14 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Build
+import android.util.Log
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -32,6 +37,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -47,21 +53,26 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import coil.compose.rememberImagePainter
 import com.example.diseasepredictionappproject.R
+import com.example.diseasepredictionappproject.loading.LoadingState
 import com.example.diseasepredictionappproject.ui.theme.blueColor4
 import com.example.diseasepredictionappproject.ui.theme.blueColor5
+import com.example.diseasepredictionappproject.view_model.FastApiViewModel
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
+import kotlinx.coroutines.delay
 import java.io.File
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun PillPredictScreen(
-    navController: NavController
+    navController: NavController,
+    fastApiViewModel: FastApiViewModel = hiltViewModel()
 ) {
     var hasPermissions by remember { mutableStateOf(false) }
 
@@ -88,12 +99,69 @@ fun PillPredictScreen(
         }
     }
 
+    val uiState by fastApiViewModel.uiState.collectAsState()
+    val context = LocalContext.current
+
     var isImageSelected by remember {
         mutableStateOf(false)
     }
 
     var selectedImage by remember {
         mutableStateOf<Uri?>(null)
+    }
+
+    var predictionPillName by remember {
+        mutableStateOf<String?>(null)
+    }
+
+    //통신제어
+    var isComplete by remember {
+        mutableStateOf(false)
+    }
+    //애니 뷰 제어
+    var isVisible by remember { mutableStateOf(true) }
+
+    //초기화
+    LaunchedEffect(Unit) {
+        selectedImage = null
+        isImageSelected = false
+        predictionPillName = null
+        isComplete = false
+        isVisible = true
+        LoadingState.hide()
+    }
+
+    LaunchedEffect(predictionPillName) {
+        if (predictionPillName != null) {
+            delay(3000)
+            isVisible = false
+        }
+    }
+
+    when (uiState) {
+        is FastApiViewModel.UiState.Loading -> {
+            LoadingState.show()
+        }
+        is FastApiViewModel.UiState.Success -> {
+            try {
+                val pillName = (uiState as FastApiViewModel.UiState.Success).data
+                Log.d("issuccess", pillName)
+                // diseaseName을 UI에 반영하거나, 필요한 작업을 추가로 수행
+                predictionPillName = pillName
+                fastApiViewModel.fetchUIState(FastApiViewModel.UiState.Wait)
+                isComplete = true
+                LoadingState.hide()
+            } catch (e : Exception) {
+                fastApiViewModel.fetchUIState(FastApiViewModel.UiState.Wait)
+            }
+        }
+        is FastApiViewModel.UiState.Error -> {
+            val error = (uiState as FastApiViewModel.UiState.Error).message
+            Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
+        }
+        is FastApiViewModel.UiState.Wait -> {
+
+        }
     }
 
     Column(
@@ -155,6 +223,24 @@ fun PillPredictScreen(
             }
             
             Spacer(modifier = Modifier.weight(1f))
+
+            if (selectedImage != null) {
+                if (isComplete) {
+                    AnimatedVisibility(
+                        visible = isVisible,
+                        exit = fadeOut(animationSpec = tween(durationMillis = 1000))
+                    ) {
+                        Text(
+                            text = predictionPillName ?: "",
+                            modifier = Modifier.padding(16.dp)
+                        )
+                    }
+                } else {
+                    BtnUI(image = R.drawable.baseline_send_24, index = 2, onClick = {
+                        fastApiViewModel.fetchPillPrediction(selectedImage!!, context)
+                    })
+                }
+            }
 
             if (hasPermissions) {
                 Row(
@@ -220,7 +306,7 @@ fun PillPredictScreen(
 }
 
 @Composable
-fun btnUI(
+fun BtnUI(
     image : Int,
     index : Int,
     onClick : (Int) -> Unit
@@ -240,6 +326,7 @@ fun btnUI(
         when (index) {
             0 -> Text(text = "카메라로 촬영")
             1 -> Text(text = "앨범에서 선택")
+            2 -> Text(text = "예측 시작")
         }
     }
 }
@@ -286,7 +373,7 @@ fun OpenCameraOrAlbum(
         onImageSelected(uri)
     }
 
-    btnUI(image = value, index = index) { click ->
+    BtnUI(image = value, index = index) { click ->
         when (click) {
             0 -> launcherCamera.launch(null) // 카메라 실행
             1 -> launcherGallery.launch("image/*") // 갤러리 실행
