@@ -7,21 +7,27 @@ import androidx.activity.compose.setContent
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.interaction.Interaction
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
@@ -32,10 +38,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -48,6 +56,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.diseasepredictionappproject.loading.GlobalLoadingScreen
 import com.example.diseasepredictionappproject.ui.theme.DiseasePredictionAppProjectTheme
+import com.example.diseasepredictionappproject.ui.theme.blueColor4
 import com.example.diseasepredictionappproject.ui.theme.blueColor5
 import com.example.diseasepredictionappproject.ui.theme.blueColor7
 import com.example.diseasepredictionappproject.view.bottom_navigation.home.HomeScreen
@@ -58,6 +67,8 @@ import com.example.diseasepredictionappproject.view.bottom_navigation.saved.Save
 import com.example.diseasepredictionappproject.view.bottom_navigation.saved.result.ResultScreen
 import com.example.diseasepredictionappproject.view_model.MedicineViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -72,7 +83,7 @@ class MainActivity : ComponentActivity() {
         data object PillPredictionCamera : BottomNavItem(R.string.bottom_center, R.drawable.baseline_camera_24, "pill")
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -90,7 +101,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
 fun MainContent() {
     val navController = rememberNavController()
@@ -110,6 +121,12 @@ fun MainContent() {
                 ) {
                     Icon(Icons.Default.Create, contentDescription = "CreateFinancialData")
                 }
+            }
+        },*/
+        floatingActionButtonPosition = FabPosition.Center,
+        /*floatingActionButton = {
+            CenterFab {
+                navController.navigate(MainActivity.BottomNavItem.PillPredictionCamera.screenRoute)
             }
         },*/
         bottomBar = {
@@ -194,15 +211,55 @@ fun BottomNavigation(navController: NavController) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp),
+                .navigationBarsPadding()
+                .padding(horizontal = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
+            //간격의 시작 타이밍이 다름 - evenly는 맨앞부터 간격시작
+            //between은 item부터
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             items.forEachIndexed { index, item ->
                 if (index == 2) {
-                    Spacer(modifier = Modifier.width(64.dp)) // Space for central button
+                    /*Column (
+                        modifier = Modifier.navigationBarsPadding().padding(bottom = 5.dp),
+                    ) {
+                        Spacer(modifier = Modifier.weight(1f, true))
+                        Text(
+                            text = stringResource(id = R.string.bottom_center), // 버튼 아래 이름
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color.Black,
+                        )
+                    }*/
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        FloatingActionButton(
+                            onClick = {
+                                navController.navigate(MainActivity.BottomNavItem.PillPredictionCamera.screenRoute)
+                            },
+                            containerColor = blueColor5,
+                            modifier = Modifier
+                                .wrapContentSize()
+                                .offset(y = (-10).dp),
+                            shape = RoundedCornerShape(36.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.baseline_camera_24),
+                                contentDescription = "Center Button",
+                                tint = Color.White
+                            )
+                        }
+                        Text(
+                            text = stringResource(id = R.string.bottom_center), // 버튼 아래 이름
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color.Black,
+                            modifier = Modifier.padding(bottom = 10.dp)
+                        )
+                    }
                 } else {
                     NavigationBarItem(
+                        //그림자 파장효과 제거
+                        interactionSource = NoRippleInteractionSource,
                         selected = currentRoute == item.screenRoute,
                         onClick = {
                             navController.navigate(item.screenRoute) {
@@ -234,7 +291,7 @@ fun BottomNavigation(navController: NavController) {
         }
 
         // 가운데 버튼
-        FloatingActionButton(
+        /*FloatingActionButton(
             onClick = {
                 navController.navigate(MainActivity.BottomNavItem.PillPredictionCamera.screenRoute)
             },
@@ -250,11 +307,11 @@ fun BottomNavigation(navController: NavController) {
                 contentDescription = "Center Button",
                 tint = Color.White
             )
-        }
+        }*/
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
 fun NavigationGraph(
     navController: NavHostController,
@@ -330,7 +387,49 @@ fun NavigationGraph(
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
+@Composable
+fun CenterFab(
+    onClick : () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .wrapContentSize()
+            .offset(y = (70).dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Box(
+            modifier = Modifier
+                .wrapContentSize()
+                .background(blueColor4, RoundedCornerShape(36.dp)),
+            contentAlignment = Alignment.Center
+        ) {
+            IconButton(
+                onClick = { onClick() }
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.baseline_camera_24),
+                    contentDescription = "Center Button",
+                    tint = Color.White
+                )
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+        }
+    }
+}
+
+/**
+ * 클릭시 알약 파장 효과를 제거.
+ */
+private object NoRippleInteractionSource : MutableInteractionSource {
+    override val interactions: Flow<Interaction> = emptyFlow()
+
+    override suspend fun emit(interaction: Interaction) {}
+
+    override fun tryEmit(interaction: Interaction) = true
+}
+
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Preview
 @Composable
 fun preView() {

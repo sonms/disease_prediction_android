@@ -5,5 +5,5 @@
     <string name="bottom_home">홈</string>
     <string name="bottom_settings">설정</string>
     <string name="bottom_saved">저장</string>
-    <string name="bottom_center">알약</string>
+    <string name="bottom_center">카메라</string>
 </resources>
