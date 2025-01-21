@@ -93,8 +93,8 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    GlobalLoadingScreen()
                     MainContent()
+                    GlobalLoadingScreen()
                 }
             }
         }
@@ -158,7 +158,6 @@ fun BottomNavigation(navController: NavController) {
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
-    val context = LocalContext.current
 
     Box(
         modifier = Modifier

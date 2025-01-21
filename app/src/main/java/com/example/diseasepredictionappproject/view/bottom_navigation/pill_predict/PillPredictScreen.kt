@@ -10,8 +10,12 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -44,6 +48,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -64,7 +69,10 @@ import com.example.diseasepredictionappproject.ui.theme.blueColor5
 import com.example.diseasepredictionappproject.view_model.FastApiViewModel
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.io.File
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
@@ -114,12 +122,17 @@ fun PillPredictScreen(
         mutableStateOf<String?>(null)
     }
 
+    var isSaved by remember { mutableStateOf(false) }
+
     //통신제어
     var isComplete by remember {
         mutableStateOf(false)
     }
     //애니 뷰 제어
-    var isVisible by remember { mutableStateOf(true) }
+    var isVisible by remember { mutableStateOf(false) }
+    var isAnotherTextVisible by remember {
+        mutableStateOf(false)
+    }
 
     //초기화
     LaunchedEffect(Unit) {
@@ -127,20 +140,29 @@ fun PillPredictScreen(
         isImageSelected = false
         predictionPillName = null
         isComplete = false
-        isVisible = true
+        isVisible = false
+        isAnotherTextVisible = false
+        isSaved = false
         LoadingState.hide()
     }
 
     LaunchedEffect(predictionPillName) {
         if (predictionPillName != null) {
-            delay(3000)
-            isVisible = false
+            delay(1000)
+            isVisible = true
         }
     }
 
     when (uiState) {
         is FastApiViewModel.UiState.Loading -> {
-            LoadingState.show()
+            CoroutineScope(Dispatchers.IO).launch {
+                LoadingState.show()
+                try {
+                    // 비동기 작업 수행
+                } finally {
+                    LoadingState.hide()
+                }
+            }
         }
         is FastApiViewModel.UiState.Success -> {
             try {
@@ -228,15 +250,61 @@ fun PillPredictScreen(
                 if (isComplete) {
                     AnimatedVisibility(
                         visible = isVisible,
-                        exit = fadeOut(animationSpec = tween(durationMillis = 1000))
+                        enter = fadeIn(animationSpec = tween(durationMillis = 500, easing = FastOutSlowInEasing)) +
+                                slideInVertically(initialOffsetY = { -20 })
                     ) {
                         Text(
                             text = predictionPillName ?: "",
                             modifier = Modifier.padding(16.dp)
                         )
                     }
+
+                    LaunchedEffect(isVisible) {
+                        if (isVisible) {
+                            delay(2000) // AnimatedVisibility 애니메이션 지속 시간 (500ms) 이후 추가 딜레이
+                            isImageSelected = true
+                        }
+                    }
+
+                    if (isImageSelected) {
+                        Row (
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .wrapContentHeight()
+                                .padding(10.dp)
+                                .alpha(
+                                    if (isVisible) 1f else 0f
+                                )
+                            ,
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "저장하시겠습니까?",
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                modifier = Modifier
+                                    .padding(top = 16.dp)
+                            )
+
+                            IconButton(
+                                modifier = Modifier.padding(top = 16.dp),
+                                onClick = {
+                                    isSaved = !isSaved
+
+                                }) {
+                                Icon(
+                                    painter = painterResource(
+                                        id = if (isSaved) R.drawable.baseline_bookmark_24 else R.drawable.baseline_bookmark_border_24),
+                                    contentDescription = "saved",
+                                    tint = if (isSaved) blueColor5 else Color.Black
+                                )
+                            }
+                        }
+                    }
                 } else {
                     BtnUI(image = R.drawable.baseline_send_24, index = 2, onClick = {
+                        LoadingState.show()
                         fastApiViewModel.fetchPillPrediction(selectedImage!!, context)
                     })
                 }
