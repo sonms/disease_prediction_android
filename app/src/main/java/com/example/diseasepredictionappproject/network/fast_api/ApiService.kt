@@ -1,5 +1,7 @@
 package com.example.diseasepredictionappproject.network.fast_api
 
+import com.example.diseasepredictionappproject.data.PillInfoDataRequest
+import com.example.diseasepredictionappproject.data.PillInfoDataResponse
 import com.example.diseasepredictionappproject.data.PredictionDiseaseResponse
 import com.example.diseasepredictionappproject.data.PredictionFeaturesData
 import com.example.diseasepredictionappproject.data.PredictionImageResponse
@@ -26,4 +28,10 @@ interface ApiService {
     fun postPredictPill(
         @Part file: MultipartBody.Part
     ): Call<PredictionImageResponse>
+
+
+    @POST("pill-info")
+    fun postPillName(
+        @Body pillName : PillInfoDataRequest
+    ) : Call<PillInfoDataResponse>
 }

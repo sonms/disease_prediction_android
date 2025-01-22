@@ -63,10 +63,14 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import coil.compose.rememberImagePainter
 import com.example.diseasepredictionappproject.R
+import com.example.diseasepredictionappproject.data.PillInfoDataRequest
 import com.example.diseasepredictionappproject.loading.LoadingState
+import com.example.diseasepredictionappproject.room_db.medicine.MedicineEntity
 import com.example.diseasepredictionappproject.ui.theme.blueColor4
 import com.example.diseasepredictionappproject.ui.theme.blueColor5
 import com.example.diseasepredictionappproject.view_model.FastApiViewModel
+import com.example.diseasepredictionappproject.view_model.MedicineViewModel
+import com.example.diseasepredictionappproject.view_model.PredictionViewModel
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import kotlinx.coroutines.CoroutineScope
@@ -80,7 +84,8 @@ import java.io.File
 @Composable
 fun PillPredictScreen(
     navController: NavController,
-    fastApiViewModel: FastApiViewModel = hiltViewModel()
+    fastApiViewModel: FastApiViewModel = hiltViewModel(),
+    viewModel : MedicineViewModel = hiltViewModel()
 ) {
     var hasPermissions by remember { mutableStateOf(false) }
 
@@ -133,6 +138,9 @@ fun PillPredictScreen(
     var isAnotherTextVisible by remember {
         mutableStateOf(false)
     }
+    var isTextVisible by remember {
+        mutableStateOf(false)
+    }
 
     //초기화
     LaunchedEffect(Unit) {
@@ -143,6 +151,7 @@ fun PillPredictScreen(
         isVisible = false
         isAnotherTextVisible = false
         isSaved = false
+        isTextVisible = false
         LoadingState.hide()
     }
 
@@ -164,12 +173,11 @@ fun PillPredictScreen(
                 }
             }
         }
-        is FastApiViewModel.UiState.Success -> {
+        is FastApiViewModel.UiState.PillPrediction -> {
+            val successData = (uiState as FastApiViewModel.UiState.PillPrediction).data
             try {
-                val pillName = (uiState as FastApiViewModel.UiState.Success).data
-                Log.d("issuccess", pillName)
-                // diseaseName을 UI에 반영하거나, 필요한 작업을 추가로 수행
-                predictionPillName = pillName
+                Log.e("success", successData)
+                predictionPillName = successData
                 fastApiViewModel.fetchUIState(FastApiViewModel.UiState.Wait)
                 isComplete = true
                 LoadingState.hide()
@@ -177,6 +185,42 @@ fun PillPredictScreen(
                 fastApiViewModel.fetchUIState(FastApiViewModel.UiState.Wait)
             }
         }
+
+        is FastApiViewModel.UiState.PillInfo -> {
+            try {
+                val successData = (uiState as FastApiViewModel.UiState.PillInfo).data
+                Log.e("success", successData)
+                /*val pillInfo = (uiState as FastApiViewModel.UiState.Success).data
+                Log.d("issuccess", pillName)*/
+                // diseaseName을 UI에 반영하거나, 필요한 작업을 추가로 수행
+                val temp = MedicineEntity(
+                    isBookMark = false,
+                    entpName = successData.split("/").firstOrNull().orEmpty(),
+                    itemName = predictionPillName.orEmpty(),
+                    efcyQesitm = successData.split("/").getOrNull(1),
+                    openDe = successData.split("/").getOrNull(2),
+                    itemSeq = null,
+                    useMethodQesitm = null,
+                    atpnQesitm = null,
+                    intrcQesitm = null,
+                    seQesitm = null,
+                    depositMethodQesitm = null,
+                    updateDe = null,
+                    itemImage = null,
+                    bizrno = null,
+                    atpnWarnQesitm = null
+                )
+
+                viewModel.addPredictionData(temp)
+
+                fastApiViewModel.fetchUIState(FastApiViewModel.UiState.Wait)
+
+                LoadingState.hide()
+            } catch (e : Exception) {
+                fastApiViewModel.fetchUIState(FastApiViewModel.UiState.Wait)
+            }
+        }
+
         is FastApiViewModel.UiState.Error -> {
             val error = (uiState as FastApiViewModel.UiState.Error).message
             Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
@@ -184,6 +228,8 @@ fun PillPredictScreen(
         is FastApiViewModel.UiState.Wait -> {
 
         }
+
+        else -> {}
     }
 
     Column(
@@ -262,11 +308,11 @@ fun PillPredictScreen(
                     LaunchedEffect(isVisible) {
                         if (isVisible) {
                             delay(2000) // AnimatedVisibility 애니메이션 지속 시간 (500ms) 이후 추가 딜레이
-                            isImageSelected = true
+                            isTextVisible = true
                         }
                     }
 
-                    if (isImageSelected) {
+                    if (isTextVisible) {
                         Row (
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -291,7 +337,9 @@ fun PillPredictScreen(
                                 modifier = Modifier.padding(top = 16.dp),
                                 onClick = {
                                     isSaved = !isSaved
-
+                                    if (isSaved) {
+                                        fastApiViewModel.fetchPillInfo(PillInfoDataRequest(predictionPillName ?: ""))
+                                    }
                                 }) {
                                 Icon(
                                     painter = painterResource(

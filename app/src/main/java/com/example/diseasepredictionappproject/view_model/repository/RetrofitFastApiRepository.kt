@@ -2,6 +2,8 @@ package com.example.diseasepredictionappproject.view_model.repository
 
 import android.content.Context
 import android.net.Uri
+import com.example.diseasepredictionappproject.data.PillInfoDataRequest
+import com.example.diseasepredictionappproject.data.PillInfoDataResponse
 import com.example.diseasepredictionappproject.data.PredictionDiseaseResponse
 import com.example.diseasepredictionappproject.data.PredictionFeaturesData
 import com.example.diseasepredictionappproject.data.PredictionImageResponse
@@ -34,5 +36,9 @@ class RetrofitFastApiRepository @Inject constructor(
         //multipart 생성
         val body = MultipartBody.Part.createFormData("file", file.name, requestFile)
         return apiService.postPredictPill(body)
+    }
+
+    fun postPillNameInfo(pillName : PillInfoDataRequest) : Call<PillInfoDataResponse> {
+        return apiService.postPillName(pillName)
     }
 }
