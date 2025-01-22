@@ -45,6 +45,9 @@ import com.example.diseasepredictionappproject.ui.theme.blueColor4
 import com.example.diseasepredictionappproject.ui.theme.blueColor5
 import com.example.diseasepredictionappproject.view_model.FastApiViewModel
 import com.example.diseasepredictionappproject.view_model.PredictionViewModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 
 fun getPredictionFeatures(): List<PredictionDiseaseResponse> {
@@ -196,11 +199,19 @@ fun PredictScreen(
 
     when (uiState) {
         is FastApiViewModel.UiState.Loading -> {
-            LoadingState.show()
+            CoroutineScope(Dispatchers.IO).launch {
+                LoadingState.show()
+                try {
+                    // 비동기 작업 수행
+                } finally {
+                    LoadingState.hide()
+                }
+            }
         }
-        is FastApiViewModel.UiState.Success -> {
+
+        is FastApiViewModel.UiState.DiseasePrediction -> {
             try {
-                val diseaseName = (uiState as FastApiViewModel.UiState.Success).data
+                val diseaseName = (uiState as FastApiViewModel.UiState.DiseasePrediction).data
                 Log.d("issuccess", diseaseName)
                 // diseaseName을 UI에 반영하거나, 필요한 작업을 추가로 수행
                 predictionDiseaseName = diseaseName
@@ -208,15 +219,21 @@ fun PredictScreen(
                 isPredictionComplete = true
                 fastApiViewModel.fetchUIState(FastApiViewModel.UiState.Wait)
                 LoadingState.hide()
-            } catch (e : Exception) {
+            } catch (e: Exception) {
                 fastApiViewModel.fetchUIState(FastApiViewModel.UiState.Wait)
             }
         }
+
         is FastApiViewModel.UiState.Error -> {
             val error = (uiState as FastApiViewModel.UiState.Error).message
             Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
         }
+
         is FastApiViewModel.UiState.Wait -> {
+
+        }
+
+        else -> {
 
         }
     }

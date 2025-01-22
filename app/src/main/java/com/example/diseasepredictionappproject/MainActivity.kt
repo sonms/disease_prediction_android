@@ -234,7 +234,11 @@ fun BottomNavigation(navController: NavController) {
                     ) {
                         FloatingActionButton(
                             onClick = {
-                                navController.navigate(MainActivity.BottomNavItem.PillPredictionCamera.screenRoute)
+                                navController.navigate(MainActivity.BottomNavItem.PillPredictionCamera.screenRoute) {
+                                    popUpTo(navController.graph.startDestinationId) { inclusive = false }
+                                    launchSingleTop = true // 중복 스택 방지
+                                    restoreState = true
+                                }
                             },
                             containerColor = blueColor5,
                             modifier = Modifier
@@ -328,7 +332,7 @@ fun NavigationGraph(
         }
         composable(MainActivity.BottomNavItem.Saved.screenRoute) {
             //CalendarScreen(navController)
-            SavedScreen(navController = navController)
+            SavedScreen(navController = navController, medicineViewModel = medicineViewModel)
         }
         composable(MainActivity.BottomNavItem.Settings.screenRoute) {
             //SettingScreen()

@@ -63,7 +63,6 @@ import com.example.diseasepredictionappproject.view_model.MedicineViewModel
 import com.example.diseasepredictionappproject.view_model.PredictionViewModel
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun SavedScreen(
@@ -232,6 +231,7 @@ fun SavedScreen(
                                         onLongClick = { delete ->
                                             // 체크 로직 추가 가능
                                             deleteMedicineItem = delete
+                                            isShow = !isShow
                                         },
                                         onCheckClick = {
                                             medicineViewModel.updateOnlySpecificMedicineData(
@@ -381,22 +381,29 @@ fun MedicineItem(
                 .fillMaxWidth()
                 .wrapContentHeight()
         ) {
-            Column {
+            Column (
+                modifier = Modifier.weight(1f)
+            ) {
                 //약 이름
-                Text(text = "${data.entpName.toString()} ${data.itemName.toString()}", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                Text(text = data.itemName.toString(), fontWeight = FontWeight.Bold, fontSize = 18.sp)
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(text = data.entpName.toString(), fontWeight = FontWeight.SemiBold, fontSize = 12.sp)
 
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = "updateDate: ${data.updateDe}",
+                    text = "품목허가일 : ${data.openDe}",
                     style = MaterialTheme.typography.bodySmall,
                     //color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                 )
             }
 
-            Spacer(modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.weight(0.3f))
 
             IconButton(
+                modifier = Modifier.weight(0.3f),
                 onClick = {
                     isClickStar = !isClickStar!!
 

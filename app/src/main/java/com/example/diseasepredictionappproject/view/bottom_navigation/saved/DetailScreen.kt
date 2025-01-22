@@ -45,7 +45,10 @@ import com.example.diseasepredictionappproject.ui.theme.blueColor4
 import com.example.diseasepredictionappproject.view_model.MedicineViewModel
 import com.example.diseasepredictionappproject.view_model.OpenApiViewModel
 import com.example.diseasepredictionappproject.view_model.PredictionViewModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @Composable
 fun DetailScreen(
@@ -83,13 +86,20 @@ fun DetailScreen(
         }
     }
 
-    LaunchedEffect(movedMedicineData) {
+    /*LaunchedEffect(movedMedicineData) {
         Log.e("movedMedicineData", movedMedicineData.toString())
-    }
+    }*/
 
     when (openApiUiState) {
         is OpenApiViewModel.OpenApiUiState.Loading -> {
-            LoadingState.show()
+            CoroutineScope(Dispatchers.IO).launch {
+                LoadingState.show()
+                try {
+                    // 비동기 작업 수행
+                } finally {
+                    LoadingState.hide()
+                }
+            }
         }
         is OpenApiViewModel.OpenApiUiState.Success -> {
             val drugInfo = (openApiUiState as OpenApiViewModel.OpenApiUiState.Success).data
@@ -98,6 +108,7 @@ fun DetailScreen(
 
             openApiViewModel.fetchOpenApiUIState(OpenApiViewModel.OpenApiUiState.Wait)
 
+            LoadingState.hide()
             navController.navigate("result")
         }
         is OpenApiViewModel.OpenApiUiState.Error -> {
@@ -231,42 +242,63 @@ fun DetailMedicineItem(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         item {
-            Row {
+            Column (
+                modifier = Modifier.padding(top = 20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
                 Text(
-                    text = "${item?.entpName.toString()} ${item?.itemName.toString()}", fontWeight = FontWeight.Bold, fontSize = 18.sp,
+                    text = item?.itemName.toString(), fontWeight = FontWeight.Bold, fontSize = 18.sp,
                 )
 
-                Text(
-                    text = "카테고리 : 약 설명", fontWeight = FontWeight.Bold, fontSize = 18.sp,
-                )
+                Spacer(modifier = Modifier.height(5.dp))
+
+                Row (
+                    modifier = Modifier.fillMaxWidth().padding(top = 10.dp)
+                ) {
+                    Text(
+                        text = item?.entpName.toString(), fontWeight = FontWeight.SemiBold, fontSize = 12.sp, color = Color.Black.copy(alpha = 0.5f)
+                    )
+
+                    Spacer(modifier = Modifier.weight(1f))
+                    
+                    Text(
+                        text = "카테고리 : 약 설명", fontWeight = FontWeight.Bold, fontSize = 12.sp
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(10.dp))
-
         }
 
         item {
-            Text(text = "효능 ${item?.efcyQesitm.toString()}")
+            Text(text = "효능 : ${item?.efcyQesitm.toString()}", fontSize = 16.sp, fontWeight = FontWeight.Bold)
 
             Spacer(modifier = Modifier.height(10.dp))
         }
 
         item {
-            Text(text = "복용법 ${item?.useMethodQesitm.toString()}")
+            if (item?.useMethodQesitm?.isNotEmpty() == true) {
+                Text(text = "복용법 ${item.useMethodQesitm}")
 
-            Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(10.dp))
+            }
         }
 
         item {
-            Text(text = "주의사항1 ${item?.atpnWarnQesitm.toString()}", color = Pink100)
+            if (item?.atpnWarnQesitm?.isNotEmpty() == true) {
+                Text(text = "주의사항1 ${item.atpnWarnQesitm}", color = Pink100)
 
-            Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(10.dp))
+            }
         }
 
         item {
-            Text(text = "주의사항2 ${item?.intrcQesitm.toString()}", color = Pink100)
+            if (item?.intrcQesitm?.isNotEmpty() == true) {
+                Text(text = "주의사항2 ${item.intrcQesitm}", color = Pink100)
 
-            Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(10.dp))
+            }
         }
 
         /*Button(
