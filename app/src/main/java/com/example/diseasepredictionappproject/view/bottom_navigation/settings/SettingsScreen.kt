@@ -36,7 +36,7 @@ fun SettingsScreen(
 
 
     Column {
-        Text(text = "글자 크기 조정", style = FontUtils.getTextStyle(fontSize))
+        Text(text = "글자 크기 조정", style = FontUtils.getTextStyle(fontSize.size))
 
         Row {
             Button(onClick = {

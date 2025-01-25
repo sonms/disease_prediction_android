@@ -44,6 +44,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -58,6 +59,9 @@ import com.example.diseasepredictionappproject.room_db.PredictionEntity
 import com.example.diseasepredictionappproject.room_db.medicine.MedicineEntity
 import com.example.diseasepredictionappproject.ui.theme.blueColor1
 import com.example.diseasepredictionappproject.ui.theme.blueColor4
+import com.example.diseasepredictionappproject.utils.FontSize
+import com.example.diseasepredictionappproject.utils.FontUtils
+import com.example.diseasepredictionappproject.utils.PreferenceDataStore
 import com.example.diseasepredictionappproject.view.bottom_navigation.saved.result.MedicineInfoItem
 import com.example.diseasepredictionappproject.view_model.MedicineViewModel
 import com.example.diseasepredictionappproject.view_model.PredictionViewModel
@@ -70,6 +74,10 @@ fun SavedScreen(
     viewModel : PredictionViewModel = hiltViewModel(),
     medicineViewModel: MedicineViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current
+
+    val fontSize by PreferenceDataStore.getFontSizeFlow(context).collectAsState(initial = FontSize.Medium)
+
     //보여질 데이터 관련
     val allPredictionData by viewModel.allPredictionsData.collectAsState(initial = emptyList())
     val allMedicineData by medicineViewModel.allMedicineData.collectAsState(initial = emptyList())
@@ -120,7 +128,8 @@ fun SavedScreen(
                     ) {
                         Text(
                             text = value,
-                            modifier = Modifier.padding(16.dp)
+                            modifier = Modifier.padding(16.dp),
+                            style = FontUtils.getTextStyle(fontSize.size + 4f)
                         )
                     }
                 }
@@ -151,7 +160,9 @@ fun SavedScreen(
                             1 -> "저장한 약 데이터가 존재하지 않습니다."
                             else -> ""
                         },
-                        textAlign = TextAlign.Center // 텍스트 가운데 정렬
+                        textAlign = TextAlign.Center, // 텍스트 가운데 정렬
+                        style = FontUtils.getTextStyle(fontSize.size + 4f),
+                        fontWeight = FontWeight.Bold
                     )
                 } else {
                     LazyColumn(
@@ -177,7 +188,8 @@ fun SavedScreen(
                                                 id = item.id,
                                                 isBookMark = !(item.isBookMark ?: false)
                                             )
-                                        }
+                                        },
+                                        fontSize
                                     )
                                 }
                                 1 -> { // "약" 탭에서의 아이템
@@ -238,7 +250,8 @@ fun SavedScreen(
                                                 id = item.id,
                                                 isBookMark = !(item.isBookMark ?: false)
                                             )
-                                        }
+                                        },
+                                        fontSize
                                     )
                                 }
                             }
@@ -262,7 +275,9 @@ fun SavedScreen(
                 onCancelClick = {
                     isShow = !isShow
                     deleteMedicineItem = null
-                })
+                },
+                fontSize
+            )
         }
 
         if (deleteMedicineItem != null) {
@@ -277,7 +292,9 @@ fun SavedScreen(
                 onCancelClick = {
                     isShow = !isShow
                     deleteMedicineItem = null
-                })
+                },
+                fontSize
+            )
         }
     }
 }
@@ -288,7 +305,8 @@ fun SavedItem(
     data : PredictionEntity,
     onClick : (PredictionEntity) -> Unit, // 정보확인용
     onLongClick : (PredictionEntity) -> Unit, //삭제용
-    onStarClick : (Boolean) -> Unit
+    onStarClick : (Boolean) -> Unit,
+    fontSize: FontSize
 ) {
     var isClickStar by remember {
         mutableStateOf(data.isBookMark)
@@ -316,13 +334,13 @@ fun SavedItem(
                 .wrapContentHeight()
         ) {
            Column {
-               Text(text = data.diseaseName.toString(), fontWeight = FontWeight.Bold, fontSize = 18.sp)
+               Text(text = data.diseaseName.toString(), fontWeight = FontWeight.Bold, style = FontUtils.getTextStyle(fontSize.size + 4f))
 
                Spacer(modifier = Modifier.height(8.dp))
 
                Text(
                    text = "Date: ${data.createDate.split("T").first()}",
-                   style = MaterialTheme.typography.bodySmall,
+                   style = FontUtils.getTextStyle(fontSize.size - 2f),
                    //color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                )
            }
@@ -353,7 +371,8 @@ fun MedicineItem(
     isChecked : Boolean,
     onClick : (MedicineEntity) -> Unit,
     onLongClick : (MedicineEntity) -> Unit,
-    onCheckClick : (Boolean) -> Unit
+    onCheckClick : (Boolean) -> Unit,
+    fontSize: FontSize
 ) {
     var isClickStar by remember {
         mutableStateOf(data.isBookMark)
@@ -385,17 +404,17 @@ fun MedicineItem(
                 modifier = Modifier.weight(1f)
             ) {
                 //약 이름
-                Text(text = data.itemName.toString(), fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                Text(text = data.itemName.toString(), fontWeight = FontWeight.Bold, style = FontUtils.getTextStyle(fontSize.size + 4f))
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                Text(text = data.entpName.toString(), fontWeight = FontWeight.SemiBold, fontSize = 12.sp)
+                Text(text = data.entpName.toString(), fontWeight = FontWeight.SemiBold, style = FontUtils.getTextStyle(fontSize.size - 2f))
 
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
                     text = "품목허가일 : ${data.openDe}",
-                    style = MaterialTheme.typography.bodySmall,
+                    style = FontUtils.getTextStyle(fontSize.size - 2f),
                     //color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                 )
             }
@@ -428,7 +447,8 @@ fun MedicineItem(
 fun DeleteItemDialog(
     item : PredictionEntity?,
     onConfirmClick : (PredictionEntity?) -> Unit,
-    onCancelClick : () -> Unit
+    onCancelClick : () -> Unit,
+    fontSize: FontSize
 ) {
     Dialog(
         onDismissRequest = { onCancelClick() }
@@ -443,8 +463,8 @@ fun DeleteItemDialog(
             Text(
                 modifier = Modifier.padding(top = 20.dp, start = 20.dp, bottom = 10.dp),
                 text = "정말 삭제하시겠습니까?",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.SemiBold
+                fontWeight = FontWeight.SemiBold,
+                style = FontUtils.getTextStyle(fontSize.size + 4f)
             )
 
             Row (
@@ -460,7 +480,7 @@ fun DeleteItemDialog(
                         contentColor = Color.White // 텍스트 색상 설정
                     ),
                 ) {
-                    Text(text = "취소")
+                    Text(text = "취소", style = FontUtils.getTextStyle(fontSize.size - 2f))
                 }
 
                 Button(
@@ -470,7 +490,7 @@ fun DeleteItemDialog(
                         contentColor = Color.White // 텍스트 색상 설정
                     ),
                 ) {
-                    Text(text = "확인")
+                    Text(text = "확인", style = FontUtils.getTextStyle(fontSize.size - 2f))
                 }
             }
         }
@@ -481,7 +501,8 @@ fun DeleteItemDialog(
 fun DeleteMedicineItemDialog(
     item : MedicineEntity?,
     onConfirmClick : (MedicineEntity?) -> Unit,
-    onCancelClick : () -> Unit
+    onCancelClick : () -> Unit,
+    fontSize: FontSize
 ) {
     Dialog(
         onDismissRequest = { onCancelClick() }
@@ -496,7 +517,7 @@ fun DeleteMedicineItemDialog(
             Text(
                 modifier = Modifier.padding(top = 20.dp, start = 20.dp, bottom = 10.dp),
                 text = "정말 삭제하시겠습니까?",
-                fontSize = 18.sp,
+                style = FontUtils.getTextStyle(fontSize.size + 4f),
                 fontWeight = FontWeight.SemiBold
             )
 
@@ -513,7 +534,7 @@ fun DeleteMedicineItemDialog(
                         contentColor = Color.White // 텍스트 색상 설정
                     ),
                 ) {
-                    Text(text = "취소")
+                    Text(text = "취소", style = FontUtils.getTextStyle(fontSize.size - 2f))
                 }
 
                 Button(
@@ -523,7 +544,7 @@ fun DeleteMedicineItemDialog(
                         contentColor = Color.White // 텍스트 색상 설정
                     ),
                 ) {
-                    Text(text = "확인")
+                    Text(text = "확인", style = FontUtils.getTextStyle(fontSize.size - 2f))
                 }
             }
         }

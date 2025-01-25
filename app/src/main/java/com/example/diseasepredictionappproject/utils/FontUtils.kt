@@ -5,9 +5,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
 object FontUtils {
-    fun getTextStyle(fontSize: FontSize): TextStyle {
+    fun getTextStyle(fontSize: Float): TextStyle {
         return TextStyle(
-            fontSize = fontSize.size.sp,
+            fontSize = fontSize.sp,
             fontWeight = FontWeight.Normal
         )
     }

@@ -30,6 +30,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -43,6 +44,9 @@ import com.example.diseasepredictionappproject.room_db.PredictionEntity
 import com.example.diseasepredictionappproject.room_db.medicine.MedicineEntity
 import com.example.diseasepredictionappproject.ui.theme.blueColor6
 import com.example.diseasepredictionappproject.ui.theme.blueColor7
+import com.example.diseasepredictionappproject.utils.FontSize
+import com.example.diseasepredictionappproject.utils.FontUtils
+import com.example.diseasepredictionappproject.utils.PreferenceDataStore
 import com.example.diseasepredictionappproject.view.bottom_navigation.saved.DeleteItemDialog
 import com.example.diseasepredictionappproject.view.bottom_navigation.saved.DeleteMedicineItemDialog
 import com.example.diseasepredictionappproject.view.bottom_navigation.saved.MedicineItem
@@ -91,6 +95,9 @@ fun HomeScreen( //건강관련팁, 질병정보검색, 최근예측결과요약
     predictionViewModel: PredictionViewModel = hiltViewModel(),
     medicineViewModel: MedicineViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current
+    val fontSize by PreferenceDataStore.getFontSizeFlow(context).collectAsState(initial = FontSize.Medium)
+    
     var isSearchOpen by remember {
         mutableStateOf(false)
     }
@@ -137,7 +144,7 @@ fun HomeScreen( //건강관련팁, 질병정보검색, 최근예측결과요약
                 .wrapContentHeight(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(text = "질병 예측", modifier = Modifier.padding(start = 10.dp))
+            Text(text = "질병 예측", modifier = Modifier.padding(start = 10.dp), style = FontUtils.getTextStyle(fontSize.size + 4f))
             
             Spacer(modifier = Modifier.weight(1f))
 
@@ -155,11 +162,11 @@ fun HomeScreen( //건강관련팁, 질병정보검색, 최근예측결과요약
         ) {
             //최근 예측결과 요약
             item {
-                RecentPredictionResult(latestPredictionData)
+                RecentPredictionResult(latestPredictionData, fontSize)
             }
             //건강관련팁
             item {
-                HealthTip(healthTipData)
+                HealthTip(healthTipData, fontSize)
             }
 
             //북마크 데이터 보여주기
@@ -186,6 +193,7 @@ fun HomeScreen( //건강관련팁, 질병정보검색, 최근예측결과요약
                                 onStarClick = {
                                     predictionViewModel.updateOnlySpecificData(id = bookMarkItem.id, isBookMark = !bookMarkItem.isBookMark!!)
                                 },
+                                fontSize
                             )
                         }
                         is MedicineEntity -> {
@@ -246,7 +254,8 @@ fun HomeScreen( //건강관련팁, 질병정보검색, 최근예측결과요약
                                         id = bookMarkItem.id,
                                         isBookMark = !(bookMarkItem.isBookMark ?: false)
                                     )
-                                }
+                                },
+                                fontSize
                             )
                         }
                         else -> {
@@ -272,7 +281,9 @@ fun HomeScreen( //건강관련팁, 질병정보검색, 최근예측결과요약
                 onCancelClick = {
                     isShow = !isShow
                     deleteMedicineItem = null
-                })
+                },
+                fontSize
+            )
         }
 
         if (deleteMedicineItem != null) {
@@ -287,13 +298,15 @@ fun HomeScreen( //건강관련팁, 질병정보검색, 최근예측결과요약
                 onCancelClick = {
                     isShow = !isShow
                     deleteMedicineItem = null
-                })
+                },
+                fontSize
+            )
         }
     }
 }
 
 @Composable
-fun RecentPredictionResult(latestPrediction : PredictionEntity?) {
+fun RecentPredictionResult(latestPrediction : PredictionEntity?, fontSize : FontSize) {
     Column (
         modifier = Modifier
             .fillMaxWidth()
@@ -306,27 +319,28 @@ fun RecentPredictionResult(latestPrediction : PredictionEntity?) {
         Text(
             text = "최근 예측 결과",
             fontWeight = FontWeight.Bold,
-            fontSize = 18.sp
+            fontSize = 18.sp,
+            style = FontUtils.getTextStyle(fontSize.size + 4f)
         )
 
         Column (
             modifier = Modifier.wrapContentSize(),
         ) {
             if (latestPrediction != null) {
-                Text(text = "최근 예측 질병 : ${latestPrediction.diseaseName}", modifier = Modifier.padding(10.dp), color = blueColor7)
+                Text(text = "최근 예측 질병 : ${latestPrediction.diseaseName}", modifier = Modifier.padding(10.dp), color = blueColor7, style = FontUtils.getTextStyle(fontSize.size))
 
-                Text(text = "${latestPrediction.diseaseContent}", modifier = Modifier.padding(10.dp), color = blueColor7)
+                Text(text = "${latestPrediction.diseaseContent}", modifier = Modifier.padding(10.dp), color = blueColor7, style = FontUtils.getTextStyle(fontSize.size))
 
-                Text(text = "시행 날짜 : ${latestPrediction.createDate}", modifier = Modifier.padding(10.dp), color = blueColor7)
+                Text(text = "시행 날짜 : ${latestPrediction.createDate}", modifier = Modifier.padding(10.dp), color = blueColor7, style = FontUtils.getTextStyle(fontSize.size))
             } else {
-                Text(text = "최근 예측 데이터가 없습니다.", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Text(text = "최근 예측 데이터가 없습니다.", fontWeight = FontWeight.Bold, style = FontUtils.getTextStyle(fontSize.size + 4f))
             }
         }
     }
 }
 
 @Composable
-fun HealthTip(healthTipData: HealthTipData?) {
+fun HealthTip(healthTipData: HealthTipData?, fontSize: FontSize) {
     Row (
         modifier = Modifier
             .fillMaxWidth()
@@ -345,11 +359,13 @@ fun HealthTip(healthTipData: HealthTipData?) {
         ) {
             Text(
                 text = healthTipData?.tipTitle.toString(),
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                style = FontUtils.getTextStyle(fontSize.size + 4f)
             )
             Text(
                 text = healthTipData?.tipDescription.toString(),
-                fontWeight = FontWeight.Medium
+                fontWeight = FontWeight.Medium,
+                style = FontUtils.getTextStyle(fontSize.size)
             )
         }
     }
