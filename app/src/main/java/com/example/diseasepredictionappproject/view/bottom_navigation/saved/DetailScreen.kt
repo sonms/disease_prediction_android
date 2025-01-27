@@ -29,6 +29,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -42,6 +43,9 @@ import com.example.diseasepredictionappproject.room_db.PredictionEntity
 import com.example.diseasepredictionappproject.room_db.medicine.MedicineEntity
 import com.example.diseasepredictionappproject.ui.theme.Pink100
 import com.example.diseasepredictionappproject.ui.theme.blueColor4
+import com.example.diseasepredictionappproject.utils.FontSize
+import com.example.diseasepredictionappproject.utils.FontUtils
+import com.example.diseasepredictionappproject.utils.PreferenceDataStore
 import com.example.diseasepredictionappproject.view_model.MedicineViewModel
 import com.example.diseasepredictionappproject.view_model.OpenApiViewModel
 import com.example.diseasepredictionappproject.view_model.PredictionViewModel
@@ -59,6 +63,9 @@ fun DetailScreen(
     openApiViewModel: OpenApiViewModel = hiltViewModel(),
     medicineViewModel: MedicineViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current
+    val fontSize by PreferenceDataStore.getFontSizeFlow(context).collectAsState(initial = FontSize.Medium)
+
     LaunchedEffect(id) {
         viewModel.setSelectedId(id)
     }
@@ -145,7 +152,7 @@ fun DetailScreen(
 
 
         if (type == "disease") {
-            DetailItem(selectData) {
+            DetailItem(selectData, fontSize) {
                 isStartRecommendMedicine = !isStartRecommendMedicine
 
                 val requestData = DrugInfoRequest (
@@ -174,7 +181,8 @@ fun DetailScreen(
             }
         } else {
             DetailMedicineItem(
-                item = movedMedicineData
+                item = movedMedicineData,
+                fontSize = fontSize
             )
         }
     }
@@ -183,6 +191,7 @@ fun DetailScreen(
 @Composable
 fun DetailItem(
     item : PredictionEntity?,
+    fontSize: FontSize,
     onBtnClick : (PredictionEntity) -> Unit
 ) {
     Column (
@@ -200,17 +209,20 @@ fun DetailItem(
                 .padding(5.dp)
         ) {
             Text(
-                text = item?.diseaseName.toString(), fontWeight = FontWeight.Bold, fontSize = 18.sp,
+                text = item?.diseaseName.toString(), fontWeight = FontWeight.Bold, style = FontUtils.getTextStyle(fontSize.size),
             )
             
             Spacer(modifier = Modifier.weight(1f))
             
             Text(
-                text = "카테고리 : 질병 설명", fontWeight = FontWeight.Bold, fontSize = 18.sp,
+                text = "카테고리 : 질병 설명", fontWeight = FontWeight.Bold, style = FontUtils.getTextStyle(fontSize.size)
             )
         }
 
-        Text(text = item?.diseaseContent.toString())
+        Text(
+            text = item?.diseaseContent.toString(),
+            style = FontUtils.getTextStyle(fontSize.size + 4f)
+        )
 
 
         Button(
@@ -224,14 +236,15 @@ fun DetailItem(
             shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.buttonColors(containerColor = blueColor4)
         ) {
-            Text(text = "약 찾아보기", color = Color.White)
+            Text(text = "약 찾아보기", color = Color.White, style = FontUtils.getTextStyle(fontSize.size))
         }
     }
 }
 
 @Composable
 fun DetailMedicineItem(
-    item : Item?
+    item : Item?,
+    fontSize: FontSize
 ) {
     LazyColumn (
         modifier = Modifier
@@ -248,22 +261,24 @@ fun DetailMedicineItem(
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = item?.itemName.toString(), fontWeight = FontWeight.Bold, fontSize = 18.sp,
+                    text = item?.itemName.toString(), fontWeight = FontWeight.Bold, style = FontUtils.getTextStyle(fontSize.size),
                 )
 
                 Spacer(modifier = Modifier.height(5.dp))
 
                 Row (
-                    modifier = Modifier.fillMaxWidth().padding(top = 10.dp)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 10.dp)
                 ) {
                     Text(
-                        text = item?.entpName.toString(), fontWeight = FontWeight.SemiBold, fontSize = 12.sp, color = Color.Black.copy(alpha = 0.5f)
+                        text = item?.entpName.toString(), fontWeight = FontWeight.SemiBold, style = FontUtils.getTextStyle(fontSize.size - 4f), color = Color.Black.copy(alpha = 0.5f)
                     )
 
                     Spacer(modifier = Modifier.weight(1f))
                     
                     Text(
-                        text = "카테고리 : 약 설명", fontWeight = FontWeight.Bold, fontSize = 12.sp
+                        text = "카테고리 : 약 설명", fontWeight = FontWeight.Bold, style = FontUtils.getTextStyle(fontSize.size - 4f)
                     )
                 }
             }
@@ -272,14 +287,14 @@ fun DetailMedicineItem(
         }
 
         item {
-            Text(text = "효능 : ${item?.efcyQesitm.toString()}", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            Text(text = "효능 : ${item?.efcyQesitm.toString()}", style = FontUtils.getTextStyle(fontSize.size), fontWeight = FontWeight.Bold)
 
             Spacer(modifier = Modifier.height(10.dp))
         }
 
         item {
             if (item?.useMethodQesitm?.isNotEmpty() == true) {
-                Text(text = "복용법 ${item.useMethodQesitm}")
+                Text(text = "복용법 ${item.useMethodQesitm}", style = FontUtils.getTextStyle(fontSize.size - 2f))
 
                 Spacer(modifier = Modifier.height(10.dp))
             }
@@ -287,7 +302,7 @@ fun DetailMedicineItem(
 
         item {
             if (item?.atpnWarnQesitm?.isNotEmpty() == true) {
-                Text(text = "주의사항1 ${item.atpnWarnQesitm}", color = Pink100)
+                Text(text = "주의사항1 ${item.atpnWarnQesitm}", color = Pink100, style = FontUtils.getTextStyle(fontSize.size - 2f))
 
                 Spacer(modifier = Modifier.height(10.dp))
             }
@@ -295,7 +310,7 @@ fun DetailMedicineItem(
 
         item {
             if (item?.intrcQesitm?.isNotEmpty() == true) {
-                Text(text = "주의사항2 ${item.intrcQesitm}", color = Pink100)
+                Text(text = "주의사항2 ${item.intrcQesitm}", color = Pink100, style = FontUtils.getTextStyle(fontSize.size - 2f))
 
                 Spacer(modifier = Modifier.height(10.dp))
             }

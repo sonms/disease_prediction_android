@@ -43,6 +43,9 @@ import com.example.diseasepredictionappproject.data.PredictionFeaturesData
 import com.example.diseasepredictionappproject.loading.LoadingState
 import com.example.diseasepredictionappproject.ui.theme.blueColor4
 import com.example.diseasepredictionappproject.ui.theme.blueColor5
+import com.example.diseasepredictionappproject.utils.FontSize
+import com.example.diseasepredictionappproject.utils.FontUtils
+import com.example.diseasepredictionappproject.utils.PreferenceDataStore
 import com.example.diseasepredictionappproject.view_model.FastApiViewModel
 import com.example.diseasepredictionappproject.view_model.PredictionViewModel
 import kotlinx.coroutines.CoroutineScope
@@ -130,6 +133,7 @@ fun PredictScreen(
     val uiState by fastApiViewModel.uiState.collectAsState()
 
     val context = LocalContext.current
+    val fontSize by PreferenceDataStore.getFontSizeFlow(context).collectAsState(initial = FontSize.Medium)
 
     //질문제어
     var isClick by remember { //시작 시 버튼 클릭 remember
@@ -253,7 +257,10 @@ fun PredictScreen(
     ) {
         //질문 시작하기 묻기
         if (!isClick) {
-            Text(text = "스스로 질병 예측하기")
+            Text(
+                text = "스스로 질병 예측하기",
+                style = FontUtils.getTextStyle(fontSize.size + 4f)
+            )
 
             Button(
                 modifier = Modifier.padding(top = 20.dp),
@@ -265,7 +272,10 @@ fun PredictScreen(
                 ),
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text(text = "시작")
+                Text(
+                    text = "시작",
+                    style = FontUtils.getTextStyle(fontSize.size)
+                )
             }
         }
 
@@ -273,7 +283,7 @@ fun PredictScreen(
         if (isClick && listIndex < 20) {
             Text(
                 text = "${getFeaturesName[listIndex].diseaseName} 증상이 있으신가요?",
-                fontSize = 24.sp,
+                style = FontUtils.getTextStyle(fontSize.size + 8f),
                 fontWeight = FontWeight.Bold
             )
 
@@ -296,9 +306,8 @@ fun PredictScreen(
                         modifier = Modifier.padding(10.dp),
                         text = "O",
                         fontWeight = FontWeight.Bold,
-                        style = TextStyle(
-                            color = Color.Blue
-                        )
+                        style = FontUtils.getTextStyle(fontSize.size),
+                        color = Color.Blue
                     )
                 }
 
@@ -314,9 +323,8 @@ fun PredictScreen(
                     Text(
                         text = "X",
                         fontWeight = FontWeight.Bold,
-                        style = TextStyle(
-                            color = Color.Red
-                        )
+                        style = FontUtils.getTextStyle(fontSize.size),
+                        color = Color.Red
                     )
                 }
             }
@@ -354,7 +362,7 @@ fun PredictScreen(
             // 결과 출력
             Text(
                 text = "예측된 질병: $predictionDiseaseName",
-                fontSize = 20.sp,
+                style = FontUtils.getTextStyle(fontSize.size),
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier
                     .padding(top = 16.dp)
@@ -373,7 +381,7 @@ fun PredictScreen(
             ) {
                 Text(
                     text = "저장하시겠습니까?",
-                    fontSize = 20.sp,
+                    style = FontUtils.getTextStyle(fontSize.size),
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier
                         .padding(top = 16.dp)

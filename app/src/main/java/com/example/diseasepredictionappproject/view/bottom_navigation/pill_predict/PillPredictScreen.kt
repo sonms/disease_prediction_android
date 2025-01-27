@@ -68,6 +68,9 @@ import com.example.diseasepredictionappproject.loading.LoadingState
 import com.example.diseasepredictionappproject.room_db.medicine.MedicineEntity
 import com.example.diseasepredictionappproject.ui.theme.blueColor4
 import com.example.diseasepredictionappproject.ui.theme.blueColor5
+import com.example.diseasepredictionappproject.utils.FontSize
+import com.example.diseasepredictionappproject.utils.FontUtils
+import com.example.diseasepredictionappproject.utils.PreferenceDataStore
 import com.example.diseasepredictionappproject.view_model.FastApiViewModel
 import com.example.diseasepredictionappproject.view_model.MedicineViewModel
 import com.example.diseasepredictionappproject.view_model.PredictionViewModel
@@ -114,6 +117,8 @@ fun PillPredictScreen(
 
     val uiState by fastApiViewModel.uiState.collectAsState()
     val context = LocalContext.current
+
+    val fontSize by PreferenceDataStore.getFontSizeFlow(context).collectAsState(initial = FontSize.Medium)
 
     var isImageSelected by remember {
         mutableStateOf(false)
@@ -285,7 +290,10 @@ fun PillPredictScreen(
                     Row {
                         Icon(painter = painterResource(id = R.drawable.baseline_image_24), contentDescription = "camera")
 
-                        Text(text = "예측할 이미지")
+                        Text(
+                            text = "예측할 이미지",
+                            style = FontUtils.getTextStyle(fontSize.size)
+                        )
                     }
                 }
             }
@@ -301,7 +309,8 @@ fun PillPredictScreen(
                     ) {
                         Text(
                             text = predictionPillName ?: "",
-                            modifier = Modifier.padding(16.dp)
+                            modifier = Modifier.padding(16.dp),
+                            style = FontUtils.getTextStyle(fontSize.size + 2f)
                         )
                     }
 
@@ -327,7 +336,7 @@ fun PillPredictScreen(
                         ) {
                             Text(
                                 text = "저장하시겠습니까?",
-                                fontSize = 20.sp,
+                                style = FontUtils.getTextStyle(fontSize.size),
                                 fontWeight = FontWeight.SemiBold,
                                 modifier = Modifier
                                     .padding(top = 16.dp)
@@ -351,7 +360,7 @@ fun PillPredictScreen(
                         }
                     }
                 } else {
-                    BtnUI(image = R.drawable.baseline_send_24, index = 2, onClick = {
+                    BtnUI(image = R.drawable.baseline_send_24, index = 2, fontSize = fontSize, onClick = {
                         LoadingState.show()
                         fastApiViewModel.fetchPillPrediction(selectedImage!!, context)
                     })
@@ -369,6 +378,7 @@ fun PillPredictScreen(
                     OpenCameraOrAlbum(
                         value = R.drawable.baseline_photo_camera_24,
                         index = 0,
+                        fontSize = fontSize,
                         onImageSelected = { uri ->
                             isImageSelected = true
                             selectedImage = uri
@@ -381,6 +391,7 @@ fun PillPredictScreen(
                     OpenCameraOrAlbum(
                         value = R.drawable.baseline_photo_album_24,
                         index = 1,
+                        fontSize = fontSize,
                         onImageSelected = { uri ->
                             isImageSelected = true
                             selectedImage = uri
@@ -411,7 +422,7 @@ fun PillPredictScreen(
 
                         Text(
                             text = "설정에서 카메라와 갤러리 접근 권한을 허용해주세요.",
-                            fontSize = 16.sp,
+                            style = FontUtils.getTextStyle(fontSize.size),
                             fontWeight = FontWeight.Bold
                         )
                     }
@@ -425,7 +436,8 @@ fun PillPredictScreen(
 fun BtnUI(
     image : Int,
     index : Int,
-    onClick : (Int) -> Unit
+    onClick : (Int) -> Unit,
+    fontSize: FontSize
 ) {
     Button(
         modifier = Modifier.wrapContentSize(),
@@ -440,9 +452,9 @@ fun BtnUI(
         Icon(painter = painterResource(id = image), contentDescription = "button icon")
         
         when (index) {
-            0 -> Text(text = "카메라로 촬영")
-            1 -> Text(text = "앨범에서 선택")
-            2 -> Text(text = "예측 시작")
+            0 -> Text(text = "카메라로 촬영", style = FontUtils.getTextStyle(fontSize.size))
+            1 -> Text(text = "앨범에서 선택", style = FontUtils.getTextStyle(fontSize.size))
+            2 -> Text(text = "예측 시작", style = FontUtils.getTextStyle(fontSize.size))
         }
     }
 }
@@ -469,7 +481,8 @@ fun ButtonRow(
 fun OpenCameraOrAlbum(
     value : Int,
     index : Int,
-    onImageSelected : (Uri?) -> Unit
+    onImageSelected : (Uri?) -> Unit,
+    fontSize: FontSize
 ) {
     val context = LocalContext.current
     val launcherCamera = rememberLauncherForActivityResult(
@@ -489,12 +502,12 @@ fun OpenCameraOrAlbum(
         onImageSelected(uri)
     }
 
-    BtnUI(image = value, index = index) { click ->
+    BtnUI(image = value, index = index, fontSize = fontSize, onClick = { click ->
         when (click) {
             0 -> launcherCamera.launch(null) // 카메라 실행
             1 -> launcherGallery.launch("image/*") // 갤러리 실행
         }
-    }
+    })
 }
 
 // Bitmap을 임시 파일로 저장 후 Uri를 반환

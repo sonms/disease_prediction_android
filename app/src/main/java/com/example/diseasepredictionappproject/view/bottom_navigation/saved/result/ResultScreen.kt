@@ -45,6 +45,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -59,6 +60,9 @@ import com.example.diseasepredictionappproject.loading.LoadingState
 import com.example.diseasepredictionappproject.room_db.PredictionEntity
 import com.example.diseasepredictionappproject.room_db.medicine.MedicineEntity
 import com.example.diseasepredictionappproject.ui.theme.blueColor4
+import com.example.diseasepredictionappproject.utils.FontSize
+import com.example.diseasepredictionappproject.utils.FontUtils
+import com.example.diseasepredictionappproject.utils.PreferenceDataStore
 import com.example.diseasepredictionappproject.view_model.MedicineViewModel
 import com.example.diseasepredictionappproject.view_model.PredictionViewModel
 import kotlinx.coroutines.delay
@@ -69,6 +73,8 @@ fun ResultScreen(
     navController: NavController,
     medicineViewModel: MedicineViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current
+    val fontSize by PreferenceDataStore.getFontSizeFlow(context).collectAsState(initial = FontSize.Medium)
 
     val resultMedicineData by medicineViewModel.medicineResultData.collectAsState()
     //체그 데이터 관리용
@@ -188,6 +194,7 @@ fun ResultScreen(
                     MedicineInfoItem(
                         data = medicine,
                         isChecked = checkedState[medicine.itemSeq] ?: false, // 초기 값은 false
+                        fontSize = fontSize,
                         onClick = {
                             medicineViewModel.updateMedicineMoveData(medicine)
                             navController.navigate("detail?type=medicine")
@@ -208,6 +215,7 @@ fun ResultScreen(
 fun MedicineInfoItem(
     data : Item,
     isChecked : Boolean,
+    fontSize: FontSize,
     onClick : (Item) -> Unit,
     //onLongClick : (Item) -> Unit,
     onCheckClick : (Boolean) -> Unit
@@ -241,7 +249,7 @@ fun MedicineInfoItem(
 
                 Text(
                     text = "updateDate: ${data.updateDe}",
-                    style = MaterialTheme.typography.bodySmall,
+                    style = FontUtils.getTextStyle(fontSize.size),
                     //color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                 )
             }

@@ -9,9 +9,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 sealed class FontSize(val size: Float) {
-    data object Small : FontSize(12f)
-    data object Medium : FontSize(16f)
-    data object Large : FontSize(20f)
+    data object Small : FontSize(16f)
+    data object Medium : FontSize(20f)
+    data object Large : FontSize(24f)
 }
 
 private val Context.dataStore by preferencesDataStore(name = "disease_settings")
