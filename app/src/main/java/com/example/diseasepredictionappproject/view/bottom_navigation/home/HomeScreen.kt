@@ -138,23 +138,6 @@ fun HomeScreen( //건강관련팁, 질병정보검색, 최근예측결과요약
     Column (
         modifier = Modifier.fillMaxWidth()
     ) {
-        Row (
-            modifier = Modifier
-                .fillMaxWidth()
-                .wrapContentHeight(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(text = "질병 예측", modifier = Modifier.padding(start = 10.dp), style = FontUtils.getTextStyle(fontSize.size + 4f))
-            
-            Spacer(modifier = Modifier.weight(1f))
-
-            IconButton(onClick = {
-                isSearchOpen = !isSearchOpen
-            }) {
-                Icon(Icons.Default.Search, contentDescription = "Search")
-            }
-        }
-        
         LazyColumn (
             modifier = Modifier
                 .fillMaxWidth()
@@ -182,7 +165,7 @@ fun HomeScreen( //건강관련팁, 질병정보검색, 최근예측결과요약
                         is PredictionEntity -> {
                             // PredictionEntity 타입의 데이터 처리
                             SavedItem(
-                                data = bookMarkItem as PredictionEntity,
+                                data = bookMarkItem,
                                 onClick = {
                                     navController.navigate("detail?id=${bookMarkItem.id}")
                                 },
@@ -235,7 +218,7 @@ fun HomeScreen( //건강관련팁, 질병정보검색, 최근예측결과요약
                             }
 
                             MedicineItem(
-                                data = bookMarkItem as MedicineEntity, // 타입 캐스팅 필요
+                                data = bookMarkItem, // 타입 캐스팅 필요
                                 isChecked = false,
                                 onClick = {
                                     navController.navigate("detail?type=medicine")

@@ -2,6 +2,7 @@ package com.example.diseasepredictionappproject
 
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.RequiresApi
@@ -22,8 +23,13 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -35,6 +41,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -44,8 +51,11 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
@@ -59,12 +69,17 @@ import com.example.diseasepredictionappproject.ui.theme.DiseasePredictionAppProj
 import com.example.diseasepredictionappproject.ui.theme.blueColor4
 import com.example.diseasepredictionappproject.ui.theme.blueColor5
 import com.example.diseasepredictionappproject.ui.theme.blueColor7
+import com.example.diseasepredictionappproject.utils.FontSize
+import com.example.diseasepredictionappproject.utils.FontUtils
+import com.example.diseasepredictionappproject.utils.PreferenceDataStore
 import com.example.diseasepredictionappproject.view.bottom_navigation.home.HomeScreen
+import com.example.diseasepredictionappproject.view.bottom_navigation.home.SearchScreen
 import com.example.diseasepredictionappproject.view.bottom_navigation.pill_predict.PillPredictScreen
 import com.example.diseasepredictionappproject.view.bottom_navigation.predict.PredictScreen
 import com.example.diseasepredictionappproject.view.bottom_navigation.saved.DetailScreen
 import com.example.diseasepredictionappproject.view.bottom_navigation.saved.SavedScreen
 import com.example.diseasepredictionappproject.view.bottom_navigation.saved.result.ResultScreen
+import com.example.diseasepredictionappproject.view.bottom_navigation.settings.SettingsScreen
 import com.example.diseasepredictionappproject.view_model.MedicineViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.Flow
@@ -108,21 +123,14 @@ fun MainContent() {
     // 현재 라우트를 가져옵니다.
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
+    val context = LocalContext.current
+    val fontSize by PreferenceDataStore.getFontSizeFlow(context).collectAsState(initial = FontSize.Medium)
     Scaffold(
-        /*floatingActionButtonPosition = FabPosition.End,
-        floatingActionButton = {
-            // 특정 라우트에서는 FloatingActionButton 숨깁니다.
-            if (currentRoute == MainActivity.BottomNavItem.Home.screenRoute || currentRoute == MainActivity.BottomNavItem.Chart.screenRoute) {
-                FloatingActionButton(
-                    onClick = {
-                        navController.navigate("edit_financial")
-                    },
-                    modifier = Modifier.padding(end = 10.dp),
-                ) {
-                    Icon(Icons.Default.Create, contentDescription = "CreateFinancialData")
-                }
-            }
-        },*/
+        topBar = {
+           if (currentRoute in listOf("home","prediction","bookmark","settings","pill")) {
+               TopAppBar(navController = navController, fontSize = fontSize)
+           }
+        },
         floatingActionButtonPosition = FabPosition.Center,
         /*floatingActionButton = {
             CenterFab {
@@ -335,7 +343,7 @@ fun NavigationGraph(
             SavedScreen(navController = navController, medicineViewModel = medicineViewModel)
         }
         composable(MainActivity.BottomNavItem.Settings.screenRoute) {
-            //SettingScreen()
+            SettingsScreen(navController = navController)
         }
 
 
@@ -363,6 +371,12 @@ fun NavigationGraph(
             ResultScreen(navController = navController,  medicineViewModel = medicineViewModel)
         }
 
+        composable(
+            route = "search",
+
+        ) { _ ->
+            SearchScreen(navController)
+        }
         /*composable(
             route = "edit_financial?type={type}&id={id}",
             arguments = listOf(
@@ -390,35 +404,53 @@ fun NavigationGraph(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CenterFab(
-    onClick : () -> Unit
+fun TopAppBar(
+    navController : NavController,
+    fontSize : FontSize
 ) {
-    Column(
-        modifier = Modifier
-            .wrapContentSize()
-            .offset(y = (70).dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Box(
-            modifier = Modifier
-                .wrapContentSize()
-                .background(blueColor4, RoundedCornerShape(36.dp)),
-            contentAlignment = Alignment.Center
-        ) {
-            IconButton(
-                onClick = { onClick() }
+    androidx.compose.material3.TopAppBar(
+        modifier = Modifier.wrapContentSize(),
+        title = {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.baseline_camera_24),
-                    contentDescription = "Center Button",
-                    tint = Color.White
+                // Title: what2c
+                Text(
+                    text = "질병 예측",
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Start,
+                    modifier = Modifier.padding(start = 5.dp),
+                    style = FontUtils.getTextStyle(fontSize.size + 2f)
                 )
             }
-
-            Spacer(modifier = Modifier.height(20.dp))
+        },
+        actions = {
+            IconButton(onClick = { navController.navigate("search") }) {
+                Icon(Icons.Default.Search, contentDescription = "Search")
+            }
         }
-    }
+    )
+
+    /*androidx.compose.material3.TopAppBar (
+        modifier = Modifier
+            .fillMaxWidth()
+            .wrapContentHeight(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(text = "질병 예측", modifier = Modifier.padding(start = 10.dp), style = FontUtils.getTextStyle(fontSize.size + 4f))
+
+        Spacer(modifier = Modifier.weight(1f))
+
+        IconButton(onClick = {
+            navController.navigate("search")
+        }) {
+            Icon(Icons.Default.Search, contentDescription = "Search")
+        }
+    }*/
 }
 
 /**
