@@ -21,6 +21,16 @@ interface MedicineDao {
     @Query("SELECT * FROM MedicineTable WHERE id = :id")
     suspend fun getSavedMedicineDataById(id : Long) : MedicineEntity?
 
+    @Query(
+        """
+        SELECT * FROM MedicineTable 
+        WHERE itemName LIKE '%' || :searchText || '%' 
+        OR entpName LIKE '%' || :searchText || '%'
+        OR efcyQesitm LIKE '%' || :searchText || '%'
+        """
+    )
+    fun searchMedicineByTitleOrContent(searchText: String): Flow<List<MedicineEntity>>
+
 
     @Insert
     suspend fun insertMedicineData(medicineData: MedicineEntity) // Room과 ViewModel의 비동기 처리 일관성을 위해 suspend로 변경

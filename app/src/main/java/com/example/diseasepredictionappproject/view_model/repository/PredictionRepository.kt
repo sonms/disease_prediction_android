@@ -2,6 +2,7 @@ package com.example.diseasepredictionappproject.view_model.repository
 
 import com.example.diseasepredictionappproject.room_db.PredictionDao
 import com.example.diseasepredictionappproject.room_db.PredictionEntity
+import com.example.diseasepredictionappproject.room_db.medicine.MedicineEntity
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
@@ -38,6 +39,10 @@ class PredictionRepository @Inject constructor(private val predictionDao: Predic
         return id?.let {
             predictionDao.getSavedDataById(id)
         }
+    }
+
+    fun searchPrediction(searchText : String) : Flow<List<PredictionEntity>> {
+        return predictionDao.searchPredictionByTitleOrContent(searchText)
     }
 
     suspend fun insertPredictionData(data: PredictionEntity) {

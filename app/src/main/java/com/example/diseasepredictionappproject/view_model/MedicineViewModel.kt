@@ -47,6 +47,19 @@ class MedicineViewModel @Inject constructor(
     // 외부에서 읽기 전용 StateFlow로 노출
     val medicineMoveData: StateFlow<Item?> = _medicineMoveData.asStateFlow()
 
+
+
+    private val _medicineSearchData = MutableStateFlow<List<MedicineEntity>>(emptyList())
+    val medicineSearchData: StateFlow<List<MedicineEntity>> = _medicineSearchData.asStateFlow()
+    fun searchMedicineData(searchText: String) {
+        viewModelScope.launch {
+            repo.searchMedicine(searchText) // Repository에서 검색 호출
+                .collect { predictions ->
+                    _medicineSearchData.value = predictions // 결과 업데이트
+                }
+        }
+    }
+
     // 데이터 갱신 함수
     fun updateMedicineMoveData(data: Item) {
        viewModelScope.launch {

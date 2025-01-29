@@ -23,6 +23,10 @@ class MedicineRepository @Inject constructor(private val dao: MedicineDao) {
         }
     }
 
+    fun searchMedicine(searchText : String) : Flow<List<MedicineEntity>> {
+        return dao.searchMedicineByTitleOrContent(searchText)
+    }
+
     suspend fun insertMedicineData(data: MedicineEntity) {
         dao.insertMedicineData(data)
     }

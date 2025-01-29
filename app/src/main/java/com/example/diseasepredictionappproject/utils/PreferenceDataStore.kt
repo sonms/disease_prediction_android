@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 sealed class FontSize(val size: Float) {
@@ -15,7 +16,7 @@ sealed class FontSize(val size: Float) {
 }
 
 private val Context.dataStore by preferencesDataStore(name = "disease_settings")
-
+private val Context.dataStore2 by preferencesDataStore(name = "search_prefs")
 object PreferenceDataStore {
     private val FONT_SIZE_KEY = stringPreferencesKey("font_size")
 
@@ -38,6 +39,32 @@ object PreferenceDataStore {
                 FontSize.Medium -> "MEDIUM"
                 FontSize.Large -> "LARGE"
             }
+        }
+    }
+
+
+    private val searchKey = stringPreferencesKey("recent_search")
+
+    suspend fun saveSearchQuery(context: Context, query: String) {
+        context.dataStore2.edit { prefs ->
+            val existingList = prefs[searchKey]?.split(",") ?: emptyList()
+            val updatedList = (listOf(query) + existingList).distinct().take(10) // 최근 검색어 10개 유지
+            prefs[searchKey] = updatedList.joinToString(",")
+        }
+    }
+
+    suspend fun deleteSearchQuery(context: Context, query: String) {
+        context.dataStore2.edit { prefs ->
+            val existingList = prefs[searchKey]?.split(",") ?: emptyList()
+            val updatedList = existingList.filter { it != query }
+            prefs[searchKey] = updatedList.joinToString(",")
+        }
+    }
+
+
+    fun getSearchQueries(context: Context): Flow<List<String>> {
+        return context.dataStore2.data.map { prefs ->
+            prefs[searchKey]?.split(",") ?: emptyList()
         }
     }
 }

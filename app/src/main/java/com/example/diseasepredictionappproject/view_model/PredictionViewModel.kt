@@ -6,6 +6,7 @@ import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.diseasepredictionappproject.room_db.PredictionEntity
+import com.example.diseasepredictionappproject.room_db.medicine.MedicineEntity
 import com.example.diseasepredictionappproject.view_model.repository.PredictionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -13,6 +14,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -83,6 +85,19 @@ class PredictionViewModel @Inject constructor(
                     _selectedSavedItem.value = null
                 }
             }
+        }
+    }
+
+    //검색용
+    private val _predictionSearchData = MutableStateFlow<List<PredictionEntity>>(emptyList())
+    val predictionSearchData: StateFlow<List<PredictionEntity>> = _predictionSearchData.asStateFlow()
+
+    fun searchPredictionData(searchText: String) {
+        viewModelScope.launch {
+            repository.searchPrediction(searchText) // Repository에서 검색 호출
+                .collect { predictions ->
+                    _predictionSearchData.value = predictions // 결과 업데이트
+                }
         }
     }
 
