@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -72,6 +73,7 @@ import com.example.diseasepredictionappproject.ui.theme.blueColor7
 import com.example.diseasepredictionappproject.utils.FontSize
 import com.example.diseasepredictionappproject.utils.FontUtils
 import com.example.diseasepredictionappproject.utils.PreferenceDataStore
+import com.example.diseasepredictionappproject.view.bottom_navigation.edit.EditScreen
 import com.example.diseasepredictionappproject.view.bottom_navigation.home.HomeScreen
 import com.example.diseasepredictionappproject.view.bottom_navigation.home.SearchScreen
 import com.example.diseasepredictionappproject.view.bottom_navigation.pill_predict.PillPredictScreen
@@ -132,11 +134,11 @@ fun MainContent() {
            }
         },
         floatingActionButtonPosition = FabPosition.Center,
-        /*floatingActionButton = {
-            CenterFab {
-                navController.navigate(MainActivity.BottomNavItem.PillPredictionCamera.screenRoute)
+        floatingActionButton = {
+            EditFab {
+                navController.navigate("edit?type={type}&id={id}")
             }
-        },*/
+        },
         bottomBar = {
             // 특정 라우트에서는 BottomNavigation을 숨깁니다.
             if (currentRoute !in listOf(
@@ -377,6 +379,21 @@ fun NavigationGraph(
         ) { _ ->
             SearchScreen(navController)
         }
+
+        composable(
+            route = "edit?type={type}&id={id}",
+            arguments = listOf(
+                navArgument("type") { defaultValue = "default" },
+                navArgument("id") { defaultValue = "-1" }
+            )
+        ) { backStackEntry ->
+
+            val type = backStackEntry.arguments?.getString("type") ?: "default"
+            val id = backStackEntry.arguments?.getString("id") ?: "-1"
+
+            EditScreen(navController, type = type, id = id)
+        }
+
         /*composable(
             route = "edit_financial?type={type}&id={id}",
             arguments = listOf(
@@ -451,6 +468,20 @@ fun TopAppBar(
             Icon(Icons.Default.Search, contentDescription = "Search")
         }
     }*/
+}
+
+@Composable
+fun EditFab (
+    onClickFab : () -> Unit
+) {
+    FloatingActionButton(
+        contentColor = blueColor4,
+        containerColor = blueColor7,
+        shape = RoundedCornerShape(36.dp),
+        onClick = { onClickFab() }
+    ) {
+        Icon(Icons.Default.Add, contentDescription = "edit data")
+    }
 }
 
 /**
