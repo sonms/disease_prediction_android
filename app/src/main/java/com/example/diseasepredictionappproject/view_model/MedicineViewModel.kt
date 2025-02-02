@@ -41,6 +41,33 @@ class MedicineViewModel @Inject constructor(
         }
     }
 
+    // 선택된 ID를 담을 StateFlow
+    private val _selectedId = MutableStateFlow<Long?>(null)
+    // 선택된 ID에 해당하는 데이터를 담을 StateFlow
+    private val _selectedSavedItem = MutableStateFlow<MedicineEntity?>(null)
+    // 외부에서 관찰할 수 있도록 public StateFlow
+    val selectedSavedItem: StateFlow<MedicineEntity?> = _selectedSavedItem
+
+    // ID에 따라 데이터를 가져오는 함수
+    fun setSelectedId(id: Long?) {
+        _selectedId.value = id
+    }
+    init {
+        // _selectedId가 변경될 때마다 이벤트를 처리하도록 설정
+        viewModelScope.launch {
+            _selectedId.collect { id ->
+                // ID가 변경될 때마다 해당 ID에 맞는 데이터를 가져와서 _selectedSavedItem 업데이트
+                if (id != null) {
+                    val event = repo.getDataById(id)
+                    _selectedSavedItem.value = event
+                } else {
+                    _selectedSavedItem.value = null
+                }
+            }
+        }
+    }
+
+
     //약 데이터 이동 관찰용
     private val _medicineMoveData = MutableStateFlow<Item?>(null)
 
