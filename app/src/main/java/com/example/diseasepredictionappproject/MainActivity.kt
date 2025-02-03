@@ -129,15 +129,17 @@ fun MainContent() {
     val fontSize by PreferenceDataStore.getFontSizeFlow(context).collectAsState(initial = FontSize.Medium)
     Scaffold(
         topBar = {
-           if (currentRoute in listOf("home","prediction","bookmark","settings","pill")) {
+           if (currentRoute in listOf("home","prediction","bookmark","settings")) {
                TopAppBar(navController = navController, fontSize = fontSize)
            }
         },
-        floatingActionButtonPosition = FabPosition.Center,
+        floatingActionButtonPosition = FabPosition.End,
         floatingActionButton = {
-            EditFab {
-                navController.navigate("edit?type={type}&id={id}")
-            }
+           if (currentRoute in listOf("home", "bookmark")) {
+               EditFab {
+                   navController.navigate("edit?type=add&data={data}&id={id}")
+               }
+           }
         },
         bottomBar = {
             // 특정 라우트에서는 BottomNavigation을 숨깁니다.
@@ -275,10 +277,17 @@ fun BottomNavigation(navController: NavController) {
                         interactionSource = NoRippleInteractionSource,
                         selected = currentRoute == item.screenRoute,
                         onClick = {
-                            navController.navigate(item.screenRoute) {
+                            /*navController.navigate(item.screenRoute) {
                                 popUpTo(navController.graph.startDestinationId) { saveState = true }
                                 restoreState = true
                                 launchSingleTop = true
+                            }*/
+                            navController.navigate(item.screenRoute) {
+                                popUpTo(navController.graph.startDestinationId) {
+                                    inclusive = true // 현재 스크린 제거
+                                }
+                                launchSingleTop = true
+                                restoreState = true
                             }
                         },
                         icon = {
@@ -381,17 +390,19 @@ fun NavigationGraph(
         }
 
         composable(
-            route = "edit?type={type}&id={id}",
+            route = "edit?type={type}&data={data}&id={id}",
             arguments = listOf(
                 navArgument("type") { defaultValue = "default" },
+                navArgument("data") {defaultValue = "default"},
                 navArgument("id") { defaultValue = "-1" }
             )
         ) { backStackEntry ->
 
             val type = backStackEntry.arguments?.getString("type") ?: "default"
+            val data = backStackEntry.arguments?.getString("data") ?:"default"
             val id = backStackEntry.arguments?.getString("id") ?: "-1"
 
-            EditScreen(navController, type = type, id = id)
+            EditScreen(navController, type = type, data = data, id = id)
         }
 
         /*composable(
@@ -475,6 +486,7 @@ fun EditFab (
     onClickFab : () -> Unit
 ) {
     FloatingActionButton(
+        modifier = Modifier.padding(end = 10.dp, bottom = 10.dp),
         contentColor = blueColor4,
         containerColor = blueColor7,
         shape = RoundedCornerShape(36.dp),

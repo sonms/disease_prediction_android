@@ -129,7 +129,7 @@ class PredictionViewModel @Inject constructor(
 
 
     @RequiresApi(Build.VERSION_CODES.O)
-    fun updateFinancialData(id: Long, diseaseName : String, diseaseContent : String, isBookMark : Boolean, recommendMedication : String) {
+    fun updatePredictionData(id: Long, diseaseName : String?, diseaseContent : String?, isBookMark : Boolean?, recommendMedication : String?) {
         viewModelScope.launch {
             val newData = PredictionEntity(
                 id = id,

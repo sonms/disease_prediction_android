@@ -114,19 +114,14 @@ class MedicineViewModel @Inject constructor(
     }
 
 
-   /* @RequiresApi(Build.VERSION_CODES.O)
-    fun updateFinancialData(id: Long, diseaseName : String, diseaseContent : String, isBookMark : Boolean, recommendMedication : String) {
+   @RequiresApi(Build.VERSION_CODES.O)
+    fun updateMedicineData(newData : MedicineEntity?) {
         viewModelScope.launch {
-            val newData = PredictionEntity(
-                id = id,
-                diseaseName = diseaseName,
-                diseaseContent = diseaseContent,
-                isBookMark = isBookMark,
-                recommendMedication = recommendMedication
-            )
-            repository.updateData(newData)
+            if (newData != null) {
+                repo.updateMedicineData(newData)
+            }
         }
-    }*/
+    }
 
     //특정필드 업데이트
     fun updateOnlySpecificMedicineData(id: Long, isBookMark: Boolean) {

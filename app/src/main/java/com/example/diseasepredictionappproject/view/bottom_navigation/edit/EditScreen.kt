@@ -1,6 +1,7 @@
 package com.example.diseasepredictionappproject.view.bottom_navigation.edit
 
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -8,10 +9,16 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
@@ -37,14 +44,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavOptions
 import com.example.diseasepredictionappproject.MainActivity
+import com.example.diseasepredictionappproject.loading.LoadingState
 import com.example.diseasepredictionappproject.room_db.medicine.MedicineEntity
 import com.example.diseasepredictionappproject.ui.theme.blueColor4
 import com.example.diseasepredictionappproject.ui.theme.blueColor6
@@ -53,13 +63,59 @@ import com.example.diseasepredictionappproject.utils.FontUtils
 import com.example.diseasepredictionappproject.utils.PreferenceDataStore
 import com.example.diseasepredictionappproject.view_model.MedicineViewModel
 import com.example.diseasepredictionappproject.view_model.PredictionViewModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.time.LocalDate
+
+// 초기화 함수
+/*fun initializeData(
+    type: String,
+    data: String,
+    id: String,
+    predictionViewModel: PredictionViewModel,
+    medicineViewModel: MedicineViewModel,
+    onInitialized: (String, String, String) -> Unit
+) {
+    LoadingState.show()
+
+    when (type) {
+        "default", "add" -> onInitialized("", "", "")
+        else -> {
+            when (data) {
+                "prediction" -> {
+                    CoroutineScope(Dispatchers.IO).launch {
+                        predictionViewModel.setSelectedId(id.toLongOrNull())
+                        val prediction = predictionViewModel.selectedSavedItem.value
+                        onInitialized(
+                            prediction?.diseaseName.orEmpty(),
+                            prediction?.diseaseContent.orEmpty(),
+                            "Prediction"
+                        )
+                    }
+                }
+                "medicine" -> {
+                    CoroutineScope(Dispatchers.IO).launch {
+                        medicineViewModel.setSelectedId(id.toLongOrNull())
+                        val medicine = medicineViewModel.selectedSavedItem.value
+                        onInitialized(
+                            medicine?.itemName.orEmpty(),
+                            medicine?.efcyQesitm.orEmpty(),
+                            "Medicine"
+                        )
+                    }
+                }
+            }
+        }
+    }
+}*/
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun EditScreen(
     navController: NavController,
     type : String,
+    data : String,
     id : String,
     predictionViewModel: PredictionViewModel = hiltViewModel(),
     medicineViewModel: MedicineViewModel = hiltViewModel()
@@ -67,10 +123,15 @@ fun EditScreen(
     val context = LocalContext.current
     val editPredictionData by predictionViewModel.selectedSavedItem.collectAsState()
     val editMedicineData by medicineViewModel.selectedSavedItem.collectAsState()
+
     val fontSize by PreferenceDataStore.getFontSizeFlow(context).collectAsState(initial = FontSize.Medium)
 
 
-    val isError by remember {
+    var isError by remember {
+        mutableStateOf(false)
+    }
+
+    var isTypeError by remember {
         mutableStateOf(false)
     }
 
@@ -86,20 +147,104 @@ fun EditScreen(
         mutableStateOf("")
     }
 
-    if (type == "edit") {
+    /*if (type == "default" || type == "add") {
         LaunchedEffect(Unit) {
-            predictionViewModel.setSelectedId(id = id.toLongOrNull())
-            medicineViewModel.setSelectedId(id = id.toLongOrNull())
-
-            editType = if (editPredictionData != null) {
-                "Prediction"
-            } else if (editMedicineData != null) {
-                "Medicine"
-            } else {
-                ""
+            editTitle = ""
+            editContent = ""
+            editType = ""
+        }
+    } else {
+        if (data == "prediction") {
+            LaunchedEffect(Unit) {
+                predictionViewModel.setSelectedId(id = id.toLongOrNull())
+                editType = "Prediction"
+            }
+        } else {
+            LaunchedEffect(Unit) {
+                medicineViewModel.setSelectedId(id = id.toLongOrNull())
+                editType = "Medicine"
             }
         }
     }
+
+
+    if (data == "prediction") {
+        LaunchedEffect(editPredictionData) {
+            editTitle = editPredictionData?.diseaseName ?: ""
+            editContent = editPredictionData?.diseaseContent ?: ""
+
+            Log.e("editTest1", editTitle.toString())
+            Log.e("editTest1", editContent.toString())
+        }
+    } else {
+        LaunchedEffect(editMedicineData) {
+            editTitle = editMedicineData?.itemName ?: ""
+            editContent = editMedicineData?.efcyQesitm ?: ""
+
+            Log.e("editTest2", editTitle.toString())
+            Log.e("editTest2", editContent.toString())
+        }
+    }*/
+    LaunchedEffect(Unit) {
+        LoadingState.show()
+    }
+
+    when (type) {
+        "default", "add" -> {
+            LaunchedEffect(Unit) {
+                editTitle = ""
+                editContent = ""
+                editType = ""
+
+                LoadingState.hide()
+            }
+        }
+        else -> {
+            when (data) {
+                "prediction" -> {
+                    LaunchedEffect(editPredictionData) {
+                        predictionViewModel.setSelectedId(id = id.toLongOrNull())
+                        editType = "Prediction"
+
+                        editTitle = editPredictionData?.diseaseName ?: ""
+                        editContent = editPredictionData?.diseaseContent ?: ""
+                        Log.e("editTest1", editTitle.toString())
+                        Log.e("editTest1", editContent.toString())
+
+                        LoadingState.hide()
+                    }
+                }
+                "medicine" -> {
+                    LaunchedEffect(editMedicineData) {
+                        medicineViewModel.setSelectedId(id = id.toLongOrNull())
+                        editType = "Medicine"
+
+                        editTitle = editMedicineData?.itemName ?: ""
+                        editContent = editMedicineData?.efcyQesitm ?: ""
+
+                        Log.e("editTest2", editTitle.toString())
+                        Log.e("editTest2", editContent.toString())
+
+                        LoadingState.hide()
+                    }
+                }
+            }
+        }
+    }
+
+    /*LaunchedEffect(type, data, id) {
+        initializeData(type, data, id, predictionViewModel, medicineViewModel) { title, content, itemType ->
+            Log.e("EditScreenData", "title: $title, content: $content")
+            editTitle = title
+            editContent = content
+            editType = itemType
+        }
+        LoadingState.hide()
+    }
+
+    // 디버깅 로그 (필요 시 유지)
+    Log.e("EditScreenData", "Prediction: $editTitle, Medicine: $editContent")*/
+
 
 
 
@@ -126,59 +271,99 @@ fun EditScreen(
             Spacer(modifier = Modifier.weight(1f))
 
             IconButton(onClick = {
-                if (editType == "Prediction") {
-                    predictionViewModel.addPredictionData(
-                        editTitle,
-                        editContent,
-                        false,
-                        ""
-                    )
-                } else if (editType == "Medicine") {
-                    medicineViewModel.addPredictionData(
-                        MedicineEntity(
-                            /*
-                            * val isBookMark: Boolean?,
-    val entpName: String?,
-    val itemName: String?,
-    val itemSeq: String?,
-    val efcyQesitm: String?,
-    val useMethodQesitm: String?,
-    val atpnWarnQesitm: String?,
-    val atpnQesitm: String?,
-    val intrcQesitm: String?,
-    val seQesitm: String?,
-    val depositMethodQesitm: String?,
-    val openDe: String?,
-    val updateDe: String?,
-    val itemImage: String?,
-    val bizrno: String?*/
-                            entpName = "",
-                            itemName = editTitle,
-                            itemSeq = "",
-                            efcyQesitm = editContent,
-                            useMethodQesitm = "",
-                            atpnWarnQesitm = "",
-                            atpnQesitm = "",
-                            intrcQesitm = "",
-                            seQesitm = "",
-                            depositMethodQesitm = "",
-                            openDe = LocalDate.now().toString(),
-                            updateDe = "",
-                            itemImage = "",
-                            bizrno = "",
-                            isBookMark = false
-                        )
-                    )
-                }
+                if (editType.isNotEmpty() && editTitle.isNotEmpty()) {
+                    if (editType == "Prediction") {
+                        when (type) {
+                            "add" -> {
+                                predictionViewModel.addPredictionData(
+                                    editTitle,
+                                    editContent,
+                                    false,
+                                    ""
+                                )
+                            }
 
-                navController.currentDestination?.route?.let {
-                    navController.navigate(
-                        it,
-                        NavOptions.Builder()
-                            .setLaunchSingleTop(true)  // 이미 존재하는 화면을 재사용하지 않음
-                            .setPopUpTo(navController.graph.startDestinationId, true)  // 이전 화면을 스택에서 제거
-                            .build()
+                            "edit" -> {
+                                predictionViewModel.updatePredictionData(
+                                    id = editPredictionData?.id!!,
+                                    diseaseName = editTitle,
+                                    diseaseContent = editContent,
+                                    isBookMark = editPredictionData?.isBookMark,
+                                    recommendMedication = editPredictionData?.recommendMedication
+                                )
+                            }
+                        }
+                    } else if (editType == "Medicine") {
+                        when (type) {
+                            "add" -> {
+                                medicineViewModel.addPredictionData(
+                                    MedicineEntity(
+                                        entpName = "",
+                                        itemName = editTitle,
+                                        itemSeq = "",
+                                        efcyQesitm = editContent,
+                                        useMethodQesitm = "",
+                                        atpnWarnQesitm = "",
+                                        atpnQesitm = "",
+                                        intrcQesitm = "",
+                                        seQesitm = "",
+                                        depositMethodQesitm = "",
+                                        openDe = LocalDate.now().toString(),
+                                        updateDe = "",
+                                        itemImage = "",
+                                        bizrno = "",
+                                        isBookMark = false
+                                    )
+                                )
+                            }
+
+                            "edit" -> {
+                                medicineViewModel.updateMedicineData(
+                                    MedicineEntity(
+                                        entpName = editMedicineData?.entpName,
+                                        itemName = editTitle,
+                                        itemSeq = editMedicineData?.itemSeq,
+                                        efcyQesitm = editContent,
+                                        useMethodQesitm = editMedicineData?.useMethodQesitm,
+                                        atpnWarnQesitm = editMedicineData?.atpnWarnQesitm,
+                                        atpnQesitm = editMedicineData?.atpnQesitm,
+                                        intrcQesitm = editMedicineData?.intrcQesitm,
+                                        seQesitm = editMedicineData?.seQesitm,
+                                        depositMethodQesitm = editMedicineData?.depositMethodQesitm,
+                                        openDe = editMedicineData?.openDe,
+                                        updateDe = editMedicineData?.updateDe,
+                                        itemImage = editMedicineData?.itemImage,
+                                        bizrno = editMedicineData?.bizrno,
+                                        isBookMark = editMedicineData?.isBookMark
+                                    )
+                                )
+                            }
+                        }
+                    }
+
+                    /*navController.currentDestination?.route?.let {
+                        navController.navigate(
+                            it,
+                            NavOptions.Builder()
+                                .setLaunchSingleTop(true)  // 이미 존재하는 화면을 재사용하지 않음
+                                .setPopUpTo(navController.graph.startDestinationId, true)  // 이전 화면을 스택에서 제거
+                                .build()
+                        )
+                    }*/
+                    navController.popBackStack(
+                        route = navController.graph.startDestinationRoute ?: "home",
+                        inclusive = false
                     )
+                } else {
+                    when {
+                        editTitle.isEmpty() -> {
+                            isError = true
+                        }
+
+                        editType.isEmpty() -> {
+                            isTypeError = true
+                        }
+                    }
                 }
             }) {
                 Icon(Icons.Default.Check, contentDescription = "edit complete")
@@ -186,28 +371,39 @@ fun EditScreen(
         }
 
 
-        //제목
-        EditTitle(
-            textTitle = editTitle,
-            onTextChange = {
-                editTitle = it
-            },
-            isError = isError
-        )
-
-        EditType(
-            fontSize,
-            onClickType = {
-                editType = it
+        LazyColumn {
+            item {
+                //제목
+                EditTitle(
+                    textTitle = editTitle,
+                    onTextChange = {
+                        editTitle = it
+                    },
+                    isError = isError,
+                    fontSize
+                )
             }
-        )
 
-        EditContent(
-            editContent,
-            onTextChange = {
-                editContent = it
+            item {
+                EditType(
+                    fontSize,
+                    isTypeError,
+                    onClickType = {
+                        editType = it
+                    }
+                )
             }
-        )
+
+            item {
+                EditContent(
+                    editContent,
+                    onTextChange = {
+                        editContent = it
+                    },
+                    fontSize
+                )
+            }
+        }
     }
 }
 
@@ -215,130 +411,136 @@ fun EditScreen(
 fun EditTitle(
     textTitle: String,
     onTextChange: (String) -> Unit,
-    isError : Boolean
+    isError : Boolean,
+    fontSize: FontSize
 ) {
     val textColor = MaterialTheme.colorScheme.primary // 동적으로 색상변경
     val isErrorCheck by rememberSaveable { mutableStateOf(isError) }
-    /*var isError by rememberSaveable { mutableStateOf(false) }
+    val focusManager = LocalFocusManager.current
 
-    fun validate(text: String?) {
-        isError = text.isNullOrEmpty()
-    }*/
-
-    Column (
+    OutlinedTextField(
+        value = textTitle,
+        onValueChange = {
+            onTextChange(it)
+            //validate(it)
+        },
+        trailingIcon = {
+            if (isError)
+                Icon(Icons.Default.Info,"error", tint = MaterialTheme.colorScheme.error)
+        },
+        singleLine = false,
+        textStyle = FontUtils.getTextStyle(fontSize.size),
+        isError = isErrorCheck,
+        /*trailingIcon = {
+            if (isError)
+                Icon(Icons.Filled.Info, "빈 칸을 채워주세요!", tint = MaterialTheme.colorScheme.error)
+        },*/
         modifier = Modifier
             .fillMaxWidth()
-    ) {
-        OutlinedTextField(
-            value = textTitle,
-            onValueChange = {
-                onTextChange(it)
-                //validate(it)
-            },
-            trailingIcon = {
-                if (isError)
-                    Icon(Icons.Default.Info,"error", tint = MaterialTheme.colorScheme.error)
-            },
-            singleLine = false,
-            textStyle = TextStyle(
-                color = textColor,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Normal,
-            ),
-            isError = isErrorCheck,
-            /*trailingIcon = {
-                if (isError)
-                    Icon(Icons.Filled.Info, "빈 칸을 채워주세요!", tint = MaterialTheme.colorScheme.error)
-            },*/
-            modifier = Modifier
-                .align(Alignment.CenterHorizontally)
-                .padding(bottom = 10.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = blueColor4
-            ),
-            label = {
-                Text (
-                    modifier = Modifier.align(Alignment.CenterHorizontally),
-                    text = "이름",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 12.sp
+            .padding(10.dp),
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = blueColor4
+        ),
+        label = {
+            Text (
+                text = "질병 혹은 약 이름을 적어주세요",
+                fontWeight = FontWeight.Bold,
+                style = FontUtils.getTextStyle(fontSize.size -2f)
+            )
+        },
+        keyboardOptions = KeyboardOptions(
+            imeAction = ImeAction.Done // 완료 버튼 표시
+        ),
+        keyboardActions = KeyboardActions(
+            onDone = { focusManager.clearFocus() }
+        ),
+        supportingText = {
+            if (isError) {
+                Text(
+                    modifier = Modifier.fillMaxWidth(),
+                    text = "질병 혹은 약 이름을 입력하세요.",
+                    color = MaterialTheme.colorScheme.error,
+                    style = FontUtils.getTextStyle(fontSize.size)
                 )
-            },
-            supportingText = {
-                if (isError) {
-                    Text(
-                        modifier = Modifier.fillMaxWidth(),
-                        text = "이름을 입력하세요.",
-                        color = MaterialTheme.colorScheme.error,
-                    )
-                }
-            },
-        )
-    }
+            }
+        },
+    )
 }
 
 @Composable
 fun EditType (
     fontSize: FontSize,
+    isError: Boolean,
     onClickType : (String) -> Unit
 ) {
     var selectedType by remember { mutableStateOf<String?>(null) }
 
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(10.dp)
-    ) {
-        // 질병 버튼
-        Button(
-            modifier = Modifier.wrapContentSize(),
-            shape = RoundedCornerShape(8.dp),
-            onClick = {
-                selectedType = "Prediction" // 선택된 타입을 업데이트
-                onClickType("Prediction")
-            },
-            colors = ButtonDefaults.buttonColors(
-                containerColor = if (selectedType == "Prediction") blueColor4 else Color.LightGray
-            )
+    Column {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(10.dp)
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(text = "질병", style = FontUtils.getTextStyle(fontSize.size))
-                if (selectedType == "Prediction") {
-                    Spacer(modifier = Modifier.width(4.dp)) // 텍스트와 체크 아이콘 간격
-                    Icon(
-                        imageVector = Icons.Default.Check,
-                        contentDescription = "Selected",
-                        tint = blueColor6
-                    )
+            // 질병 버튼
+            Button(
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(8.dp),
+                onClick = {
+                    selectedType = "Prediction" // 선택된 타입을 업데이트
+                    onClickType("Prediction")
+                },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (selectedType == "Prediction") blueColor4 else Color.Gray
+                )
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(text = "질병", style = FontUtils.getTextStyle(fontSize.size))
+                    if (selectedType == "Prediction") {
+                        Spacer(modifier = Modifier.width(4.dp)) // 텍스트와 체크 아이콘 간격
+                        Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = "Selected",
+                            tint = blueColor6
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            // 약 버튼
+            Button(
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(8.dp),
+                onClick = {
+                    selectedType = "Medicine" // 선택된 타입을 업데이트
+                    onClickType("Medicine")
+                },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (selectedType == "Medicine") blueColor4 else Color.Gray
+                )
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(text = "약", style = FontUtils.getTextStyle(fontSize.size))
+                    if (selectedType == "Medicine") {
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = "Selected",
+                            tint = blueColor6
+                        )
+                    }
                 }
             }
         }
 
-        Spacer(modifier = Modifier.weight(1f))
-
-        // 약 버튼
-        Button(
-            modifier = Modifier.wrapContentSize(),
-            shape = RoundedCornerShape(8.dp),
-            onClick = {
-                selectedType = "Medicine" // 선택된 타입을 업데이트
-                onClickType("Medicine")
-            },
-            colors = ButtonDefaults.buttonColors(
-                containerColor = if (selectedType == "Medicine") blueColor4 else Color.LightGray
+        if (isError) {
+            Text(
+                modifier = Modifier.padding(start = 10.dp, bottom = 10.dp),
+                text = "유형을 선택해주세요.",
+                style = FontUtils.getTextStyle(fontSize.size),
+                color = MaterialTheme.colorScheme.error
             )
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(text = "약", style = FontUtils.getTextStyle(fontSize.size))
-                if (selectedType == "Medicine") {
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Icon(
-                        imageVector = Icons.Default.Check,
-                        contentDescription = "Selected",
-                        tint = blueColor6
-                    )
-                }
-            }
         }
     }
 }
@@ -346,38 +548,37 @@ fun EditType (
 @Composable
 fun EditContent(
     textContent: String,
-    onTextChange: (String) -> Unit
+    onTextChange: (String) -> Unit,
+    fontSize : FontSize
 ) {
-    val textColor = MaterialTheme.colorScheme.primary//동적으로 색상변경
+    val focusManager = LocalFocusManager.current
 
-    Column (
+    OutlinedTextField(
+        value = textContent,
+        onValueChange = onTextChange,
+        singleLine = false,
+        textStyle = FontUtils.getTextStyle(fontSize.size),
         modifier = Modifier
             .fillMaxWidth()
-    ) {
-        OutlinedTextField(
-            value = textContent,
-            onValueChange = onTextChange,
-            singleLine = false,
-            textStyle = TextStyle (
-                color = textColor,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Normal,
-            ),
-            modifier = Modifier
-                .align(Alignment.CenterHorizontally)
-                .padding(bottom = 10.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = blueColor6
-            ),
-            label = {
-                Text(
-                    modifier = Modifier.align(Alignment.CenterHorizontally),
-                    text = "필요한 내용을 적어주세요",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 12.sp,
-                    color = Color.Blue.copy(alpha = 0.5f)
-                )
-            }
-        )
-    }
+            .heightIn(min = 100.dp, max = 200.dp) // 최대 높이 제한
+            .verticalScroll(rememberScrollState()) // 내용이 넘칠 때 스크롤 가능
+            .padding(10.dp),
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = blueColor6
+        ),
+        keyboardOptions = KeyboardOptions(
+            imeAction = ImeAction.Done // 완료 버튼 표시
+        ),
+        keyboardActions = KeyboardActions(
+            onDone = { focusManager.clearFocus() }
+        ),
+        label = {
+            Text(
+                text = "필요한 내용을 적어주세요 (선택사항)",
+                fontWeight = FontWeight.Bold,
+                style = FontUtils.getTextStyle(fontSize.size),
+                color = Color.Black.copy(alpha = 0.5f)
+            )
+        }
+    )
 }
