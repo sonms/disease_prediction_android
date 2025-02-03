@@ -3,6 +3,7 @@ package com.example.diseasepredictionappproject.view.bottom_navigation.home
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -98,10 +99,6 @@ fun HomeScreen( //건강관련팁, 질병정보검색, 최근예측결과요약
     val context = LocalContext.current
     val fontSize by PreferenceDataStore.getFontSizeFlow(context).collectAsState(initial = FontSize.Medium)
     
-    var isSearchOpen by remember {
-        mutableStateOf(false)
-    }
-
     var healthTipData by remember {
         mutableStateOf<HealthTipData?>(null)
     }
@@ -145,7 +142,9 @@ fun HomeScreen( //건강관련팁, 질병정보검색, 최근예측결과요약
         ) {
             //최근 예측결과 요약
             item {
-                RecentPredictionResult(latestPredictionData, fontSize)
+                RecentPredictionResult(latestPredictionData, fontSize) {
+                    navController.navigate("detail?id=${it.id}")
+                }
             }
             //건강관련팁
             item {
@@ -289,7 +288,11 @@ fun HomeScreen( //건강관련팁, 질병정보검색, 최근예측결과요약
 }
 
 @Composable
-fun RecentPredictionResult(latestPrediction : PredictionEntity?, fontSize : FontSize) {
+fun RecentPredictionResult(
+    latestPrediction : PredictionEntity?,
+    fontSize : FontSize,
+    onClickRecent : (PredictionEntity) -> Unit
+) {
     Column (
         modifier = Modifier
             .fillMaxWidth()
@@ -307,14 +310,18 @@ fun RecentPredictionResult(latestPrediction : PredictionEntity?, fontSize : Font
         )
 
         Column (
-            modifier = Modifier.wrapContentSize(),
+            modifier = Modifier.wrapContentSize().clickable {
+                if (latestPrediction != null) {
+                    onClickRecent(latestPrediction)
+                }
+            },
         ) {
             if (latestPrediction != null) {
-                Text(text = "최근 예측 질병 : ${latestPrediction.diseaseName}", modifier = Modifier.padding(10.dp), color = blueColor7, style = FontUtils.getTextStyle(fontSize.size))
+                Text(text = "최근 예측 질병 : ${latestPrediction.diseaseName}", modifier = Modifier.fillMaxWidth().padding(10.dp), color = blueColor7, style = FontUtils.getTextStyle(fontSize.size))
 
-                Text(text = "${latestPrediction.diseaseContent}", modifier = Modifier.padding(10.dp), color = blueColor7, style = FontUtils.getTextStyle(fontSize.size))
+                Text(text = "내용 : ${latestPrediction.diseaseContent}", modifier = Modifier.fillMaxWidth().padding(10.dp), color = blueColor7, style = FontUtils.getTextStyle(fontSize.size))
 
-                Text(text = "시행 날짜 : ${latestPrediction.createDate}", modifier = Modifier.padding(10.dp), color = blueColor7, style = FontUtils.getTextStyle(fontSize.size))
+                Text(text = "시행 날짜 : ${latestPrediction.createDate.split('T').first()}", modifier = Modifier.fillMaxWidth().padding(10.dp), color = blueColor7, style = FontUtils.getTextStyle(fontSize.size))
             } else {
                 Text(text = "최근 예측 데이터가 없습니다.", fontWeight = FontWeight.Bold, style = FontUtils.getTextStyle(fontSize.size + 4f))
             }
