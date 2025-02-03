@@ -2,17 +2,22 @@ package com.example.diseasepredictionappproject.view.bottom_navigation.saved
 
 import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -145,189 +150,265 @@ fun DetailScreen(
                         .align(Alignment.Top),
                     horizontalAlignment = Alignment.Start
                 ) {
-                    Icon(Icons.Default.ArrowBack, contentDescription = "backScreen")
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "backScreen")
                 }
             }
         }
 
 
         if (type == "disease") {
-            DetailItem(selectData, fontSize) {
-                isStartRecommendMedicine = !isStartRecommendMedicine
+            DetailItem(
+                selectData,
+                fontSize,
+                onSearchMedicine = {
+                    {
+                        isStartRecommendMedicine = !isStartRecommendMedicine
 
-                val requestData = DrugInfoRequest (
-                    /*@SerializedName("ServiceKey") val serviceKey: String, // 인증키
-        @SerializedName("pageNo") val pageNo: Int? = null, // 페이지 번호 (옵션)
-        @SerializedName("numOfRows") val numOfRows: Int? = null, // 한 페이지 결과 수 (옵션)
-        @SerializedName("entpName") val entpName: String? = null, // 업체명 (옵션)
-        @SerializedName("itemName") val itemName: String? = null, // 제품명 (옵션)
-        @SerializedName("itemSeq") val itemSeq: String? = null, // 품목기준코드 (옵션)
-        @SerializedName("efcyQesitm") val efcyQesitm: String? = null, // 문항1(효능) (옵션)
-        @SerializedName("useMethodQesitm") val useMethodQesitm: String? = null, // 문항2(사용법) (옵션)
-        @SerializedName("atpnWarnQesitm") val atpnWarnQesitm: String? = null, // 문항3(주의사항경고) (옵션)
-        @SerializedName("atpnQesitm") val atpnQesitm: String? = null, // 문항4(주의사항) (옵션)
-        @SerializedName("intrcQesitm") val intrcQesitm: String? = null, // 문항5(상호작용) (옵션)
-        @SerializedName("seQesitm") val seQesitm: String? = null, // 문항6(부작용) (옵션)
-        @SerializedName("depositMethodQesitm") val depositMethodQesitm: String? = null, // 문항7(보관법) (옵션)
-        @SerializedName("openDe") val openDe: String? = null, // 공개일자 (옵션)
-        @SerializedName("updateDe") val updateDe: String? = null, // 수정일자 (옵션)
-        @SerializedName("type") val type: String? = "json" // 데이터 포맷 (옵션, 기본값: xml)*/
-                    serviceKey = BuildConfig.MEDICINE_API_KEY_D,
-                    efcyQesitm = it.diseaseContent?.split(",")?.get(0),
-                    type = "json"
-                )
+                        val requestData = DrugInfoRequest (
+                            /*@SerializedName("ServiceKey") val serviceKey: String, // 인증키
+                @SerializedName("pageNo") val pageNo: Int? = null, // 페이지 번호 (옵션)
+                @SerializedName("numOfRows") val numOfRows: Int? = null, // 한 페이지 결과 수 (옵션)
+                @SerializedName("entpName") val entpName: String? = null, // 업체명 (옵션)
+                @SerializedName("itemName") val itemName: String? = null, // 제품명 (옵션)
+                @SerializedName("itemSeq") val itemSeq: String? = null, // 품목기준코드 (옵션)
+                @SerializedName("efcyQesitm") val efcyQesitm: String? = null, // 문항1(효능) (옵션)
+                @SerializedName("useMethodQesitm") val useMethodQesitm: String? = null, // 문항2(사용법) (옵션)
+                @SerializedName("atpnWarnQesitm") val atpnWarnQesitm: String? = null, // 문항3(주의사항경고) (옵션)
+                @SerializedName("atpnQesitm") val atpnQesitm: String? = null, // 문항4(주의사항) (옵션)
+                @SerializedName("intrcQesitm") val intrcQesitm: String? = null, // 문항5(상호작용) (옵션)
+                @SerializedName("seQesitm") val seQesitm: String? = null, // 문항6(부작용) (옵션)
+                @SerializedName("depositMethodQesitm") val depositMethodQesitm: String? = null, // 문항7(보관법) (옵션)
+                @SerializedName("openDe") val openDe: String? = null, // 공개일자 (옵션)
+                @SerializedName("updateDe") val updateDe: String? = null, // 수정일자 (옵션)
+                @SerializedName("type") val type: String? = "json" // 데이터 포맷 (옵션, 기본값: xml)*/
+                            serviceKey = BuildConfig.MEDICINE_API_KEY_D,
+                            efcyQesitm = it.diseaseContent?.split(",")?.get(0),
+                            type = "json"
+                        )
 
-                clickData = requestData
-            }
+                        clickData = requestData
+                    }
+                },
+                onEditData = {
+                    navController.navigate("edit?type=edit&data=prediction&id=${it.id}")
+                }
+            )
         } else {
             DetailMedicineItem(
                 item = movedMedicineData,
                 fontSize = fontSize
-            )
+            ) {
+                navController.navigate("edit?type=edit&data=medicine&id=${it?.bizrno?.toLong()}")
+            }
         }
     }
 }
 
 @Composable
 fun DetailItem(
-    item : PredictionEntity?,
+    item: PredictionEntity?,
     fontSize: FontSize,
-    onBtnClick : (PredictionEntity) -> Unit
+    onSearchMedicine: (PredictionEntity) -> Unit,
+    onEditData: (PredictionEntity) -> Unit
 ) {
-    Column (
+    Box(
         modifier = Modifier
-            .fillMaxWidth()
-            .wrapContentHeight()
-            .padding(10.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+            .fillMaxSize()
+            .padding(10.dp)
     ) {
-        Row (
+        // 상단 (제목 + 카테고리)
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .wrapContentHeight()
-                .padding(5.dp)
+                .align(Alignment.TopCenter)
+                .padding(top = 20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = item?.diseaseName.toString(), fontWeight = FontWeight.Bold, style = FontUtils.getTextStyle(fontSize.size),
+                text = item?.diseaseName.orEmpty(),
+                fontWeight = FontWeight.Bold,
+                style = FontUtils.getTextStyle(fontSize.size + 2f)
             )
-            
-            Spacer(modifier = Modifier.weight(1f))
-            
+
             Text(
-                text = "카테고리 : 질병 설명", fontWeight = FontWeight.Bold, style = FontUtils.getTextStyle(fontSize.size)
+                text = "카테고리: 질병 설명",
+                fontWeight = FontWeight.Bold,
+                style = FontUtils.getTextStyle(fontSize.size),
+                modifier = Modifier.padding(top = 8.dp)
             )
         }
 
+        // 중앙 (내용)
         Text(
-            text = item?.diseaseContent.toString(),
-            style = FontUtils.getTextStyle(fontSize.size + 4f)
+            text = item?.diseaseContent.orEmpty(),
+            style = FontUtils.getTextStyle(fontSize.size + 4f),
+            modifier = Modifier
+                .align(Alignment.Center)
+                .padding(horizontal = 16.dp)
         )
 
-
-        Button(
+        // 하단 (버튼들)
+        Row(
             modifier = Modifier
-                .padding(top = 20.dp),
-            onClick = {
-                if (item != null) {
-                    onBtnClick(item)
-                }
-            },
-            shape = RoundedCornerShape(12.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = blueColor4)
+                .fillMaxWidth()
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 20.dp),
+            horizontalArrangement = Arrangement.Center
         ) {
-            Text(text = "약 찾아보기", color = Color.White, style = FontUtils.getTextStyle(fontSize.size))
+            Button(
+                onClick = { item?.let { onSearchMedicine(it) } },
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = blueColor4)
+            ) {
+                Text(
+                    text = "약 찾아보기",
+                    color = Color.White,
+                    style = FontUtils.getTextStyle(fontSize.size)
+                )
+            }
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            Button(
+                onClick = { item?.let { onEditData(it) } },
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = blueColor4)
+            ) {
+                Text(
+                    text = "수정하기",
+                    color = Color.White,
+                    style = FontUtils.getTextStyle(fontSize.size)
+                )
+            }
         }
     }
 }
 
 @Composable
 fun DetailMedicineItem(
-    item : Item?,
-    fontSize: FontSize
+    item: Item?,
+    fontSize: FontSize,
+    onEditData: (Item?) -> Unit
 ) {
-    LazyColumn (
+    Column(
         modifier = Modifier
-            .fillMaxWidth()
-            .wrapContentHeight()
-            .padding(10.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+            .fillMaxSize()
+            .padding(10.dp)
     ) {
-        item {
-            Column (
-                modifier = Modifier.padding(top = 20.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+        // 상단: 제목, 제약회사, 카테고리
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = item?.itemName.orEmpty(),
+                fontWeight = FontWeight.Bold,
+                style = FontUtils.getTextStyle(fontSize.size + 2f)
+            )
+
+            Spacer(modifier = Modifier.height(5.dp))
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 10.dp)
             ) {
                 Text(
-                    text = item?.itemName.toString(), fontWeight = FontWeight.Bold, style = FontUtils.getTextStyle(fontSize.size),
+                    text = item?.entpName.orEmpty(),
+                    fontWeight = FontWeight.SemiBold,
+                    style = FontUtils.getTextStyle(fontSize.size - 4f),
+                    color = Color.Black.copy(alpha = 0.5f)
                 )
 
-                Spacer(modifier = Modifier.height(5.dp))
+                Spacer(modifier = Modifier.weight(1f))
 
-                Row (
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 10.dp)
-                ) {
-                    Text(
-                        text = item?.entpName.toString(), fontWeight = FontWeight.SemiBold, style = FontUtils.getTextStyle(fontSize.size - 4f), color = Color.Black.copy(alpha = 0.5f)
-                    )
+                Text(
+                    text = "카테고리: 약 설명",
+                    fontWeight = FontWeight.Bold,
+                    style = FontUtils.getTextStyle(fontSize.size - 4f)
+                )
+            }
+        }
 
-                    Spacer(modifier = Modifier.weight(1f))
-                    
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // 중앙: 스크롤 가능한 효능, 복용법, 주의사항
+        if (item?.atpnWarnQesitm.isNullOrEmpty()) {
+            Text(
+                text = "효능: ${item?.efcyQesitm.orEmpty()}",
+                style = FontUtils.getTextStyle(fontSize.size),
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.align(Alignment.CenterHorizontally).weight(1f)
+            )
+            Spacer(modifier = Modifier.height(10.dp))
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .weight(1f)
+                    .wrapContentWidth()
+                    .align(Alignment.CenterHorizontally)
+                    .padding(horizontal = 16.dp)
+            ) {
+                item {
                     Text(
-                        text = "카테고리 : 약 설명", fontWeight = FontWeight.Bold, style = FontUtils.getTextStyle(fontSize.size - 4f)
+                        text = "효능: ${item?.efcyQesitm.orEmpty()}",
+                        style = FontUtils.getTextStyle(fontSize.size),
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
                     )
+                    Spacer(modifier = Modifier.height(10.dp))
+                }
+
+                item {
+                    item?.useMethodQesitm?.takeIf { it.isNotEmpty() }?.let {
+                        Text(
+                            text = "복용법: $it",
+                            style = FontUtils.getTextStyle(fontSize.size - 2f)
+                        )
+                        Spacer(modifier = Modifier.height(10.dp))
+                    }
+                }
+
+                item {
+                    item?.atpnWarnQesitm?.takeIf { it.isNotEmpty() }?.let {
+                        Text(
+                            text = "주의사항1: $it",
+                            color = Pink100,
+                            style = FontUtils.getTextStyle(fontSize.size - 2f)
+                        )
+                        Spacer(modifier = Modifier.height(10.dp))
+                    }
+                }
+
+                item {
+                    item?.intrcQesitm?.takeIf { it.isNotEmpty() }?.let {
+                        Text(
+                            text = "주의사항2: $it",
+                            color = Pink100,
+                            style = FontUtils.getTextStyle(fontSize.size - 2f)
+                        )
+                        Spacer(modifier = Modifier.height(10.dp))
+                    }
                 }
             }
-
-            Spacer(modifier = Modifier.height(10.dp))
         }
 
-        item {
-            Text(text = "효능 : ${item?.efcyQesitm.toString()}", style = FontUtils.getTextStyle(fontSize.size), fontWeight = FontWeight.Bold)
-
-            Spacer(modifier = Modifier.height(10.dp))
-        }
-
-        item {
-            if (item?.useMethodQesitm?.isNotEmpty() == true) {
-                Text(text = "복용법 ${item.useMethodQesitm}", style = FontUtils.getTextStyle(fontSize.size - 2f))
-
-                Spacer(modifier = Modifier.height(10.dp))
-            }
-        }
-
-        item {
-            if (item?.atpnWarnQesitm?.isNotEmpty() == true) {
-                Text(text = "주의사항1 ${item.atpnWarnQesitm}", color = Pink100, style = FontUtils.getTextStyle(fontSize.size - 2f))
-
-                Spacer(modifier = Modifier.height(10.dp))
-            }
-        }
-
-        item {
-            if (item?.intrcQesitm?.isNotEmpty() == true) {
-                Text(text = "주의사항2 ${item.intrcQesitm}", color = Pink100, style = FontUtils.getTextStyle(fontSize.size - 2f))
-
-                Spacer(modifier = Modifier.height(10.dp))
-            }
-        }
-
-        /*Button(
+        // 하단: 수정하기 버튼
+        Button(
             modifier = Modifier
-                .padding(top = 20.dp),
-            onClick = {
-                if (item != null) {
-                    onBtnClick(item)
-                }
-            },
+                .fillMaxWidth()
+                .padding(vertical = 20.dp),
+            onClick = { item?.let { onEditData(it) } },
             shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.buttonColors(containerColor = blueColor4)
         ) {
-            Text(text = "약 찾아보기", color = Color.White)
-        }*/
+            Text(
+                text = "수정하기",
+                color = Color.White,
+                style = FontUtils.getTextStyle(fontSize.size)
+            )
+        }
     }
 }

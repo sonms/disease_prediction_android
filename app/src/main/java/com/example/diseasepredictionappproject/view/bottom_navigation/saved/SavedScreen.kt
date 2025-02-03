@@ -225,12 +225,12 @@ fun SavedScreen(
                                             openDe = it.openDe,
                                             updateDe = it.updateDe,
                                             itemImage = it.itemImage,
-                                            bizrno = it.bizrno
+                                            bizrno = it.id.toString()
                                         )
                                     }
 
                                     MedicineItem(
-                                        data = item as MedicineEntity, // 타입 캐스팅 필요
+                                        data = item, // 타입 캐스팅 필요
                                         isChecked = false,
                                         onClick = {
                                             navController.navigate("detail?type=medicine")
