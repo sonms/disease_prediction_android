@@ -13,10 +13,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
 import androidx.compose.animation.slideInVertically
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -26,9 +23,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -56,24 +51,20 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
-import coil.compose.rememberImagePainter
 import com.example.diseasepredictionappproject.R
 import com.example.diseasepredictionappproject.data.PillInfoDataRequest
 import com.example.diseasepredictionappproject.loading.LoadingState
 import com.example.diseasepredictionappproject.room_db.medicine.MedicineEntity
-import com.example.diseasepredictionappproject.ui.theme.blueColor4
 import com.example.diseasepredictionappproject.ui.theme.blueColor5
 import com.example.diseasepredictionappproject.utils.FontSize
 import com.example.diseasepredictionappproject.utils.FontUtils
 import com.example.diseasepredictionappproject.utils.PreferenceDataStore
 import com.example.diseasepredictionappproject.view_model.FastApiViewModel
 import com.example.diseasepredictionappproject.view_model.MedicineViewModel
-import com.example.diseasepredictionappproject.view_model.PredictionViewModel
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import kotlinx.coroutines.CoroutineScope
@@ -81,6 +72,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
+import java.time.LocalDate
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @OptIn(ExperimentalPermissionsApi::class)
@@ -210,7 +202,7 @@ fun PillPredictScreen(
                     intrcQesitm = null,
                     seQesitm = null,
                     depositMethodQesitm = null,
-                    updateDe = null,
+                    updateDe = LocalDate.now().toString(),
                     itemImage = null,
                     bizrno = null,
                     atpnWarnQesitm = null

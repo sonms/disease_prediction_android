@@ -5,7 +5,6 @@ import androidx.annotation.RequiresApi
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -25,12 +24,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SecondaryScrollableTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
@@ -49,7 +44,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
@@ -57,12 +51,10 @@ import com.example.diseasepredictionappproject.R
 import com.example.diseasepredictionappproject.data.Item
 import com.example.diseasepredictionappproject.room_db.PredictionEntity
 import com.example.diseasepredictionappproject.room_db.medicine.MedicineEntity
-import com.example.diseasepredictionappproject.ui.theme.blueColor1
 import com.example.diseasepredictionappproject.ui.theme.blueColor4
 import com.example.diseasepredictionappproject.utils.FontSize
 import com.example.diseasepredictionappproject.utils.FontUtils
 import com.example.diseasepredictionappproject.utils.PreferenceDataStore
-import com.example.diseasepredictionappproject.view.bottom_navigation.saved.result.MedicineInfoItem
 import com.example.diseasepredictionappproject.view_model.MedicineViewModel
 import com.example.diseasepredictionappproject.view_model.PredictionViewModel
 import kotlinx.coroutines.launch
@@ -339,7 +331,7 @@ fun SavedItem(
                Spacer(modifier = Modifier.height(8.dp))
 
                Text(
-                   text = "Date: ${data.createDate.split("T").first()}",
+                   text = "Date: ${data.createDate?.split("T")?.first()}",
                    style = FontUtils.getTextStyle(fontSize.size - 2f),
                    //color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                )
@@ -413,7 +405,7 @@ fun MedicineItem(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = "품목허가일 : ${data.openDe}",
+                    text = "Date: ${data.openDe}",
                     style = FontUtils.getTextStyle(fontSize.size - 2f),
                     //color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                 )

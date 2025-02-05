@@ -6,7 +6,6 @@ import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.diseasepredictionappproject.room_db.PredictionEntity
-import com.example.diseasepredictionappproject.room_db.medicine.MedicineEntity
 import com.example.diseasepredictionappproject.view_model.repository.PredictionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -129,16 +128,21 @@ class PredictionViewModel @Inject constructor(
 
 
     @RequiresApi(Build.VERSION_CODES.O)
-    fun updatePredictionData(id: Long, diseaseName : String?, diseaseContent : String?, isBookMark : Boolean?, recommendMedication : String?) {
+    fun updatePredictionData(id: Long, diseaseName : String?, diseaseContent : String?, createDate : String?, isBookMark : Boolean?, recommendMedication : String?) {
         viewModelScope.launch {
-            val newData = PredictionEntity(
-                id = id,
-                diseaseName = diseaseName,
-                diseaseContent = diseaseContent,
-                isBookMark = isBookMark,
-                recommendMedication = recommendMedication
-            )
-            repository.updateData(newData)
+            val newData = createDate?.let {
+                PredictionEntity(
+                    id = id,
+                    diseaseName = diseaseName,
+                    diseaseContent = diseaseContent,
+                    createDate = it,
+                    isBookMark = isBookMark,
+                    recommendMedication = recommendMedication
+                )
+            }
+            if (newData != null) {
+                repository.updateData(newData)
+            }
         }
     }
 

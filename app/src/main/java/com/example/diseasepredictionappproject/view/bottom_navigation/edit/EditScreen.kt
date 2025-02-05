@@ -21,7 +21,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Button
@@ -45,14 +44,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import androidx.navigation.NavOptions
 import com.example.diseasepredictionappproject.MainActivity
 import com.example.diseasepredictionappproject.loading.LoadingState
 import com.example.diseasepredictionappproject.room_db.medicine.MedicineEntity
@@ -63,9 +59,6 @@ import com.example.diseasepredictionappproject.utils.FontUtils
 import com.example.diseasepredictionappproject.utils.PreferenceDataStore
 import com.example.diseasepredictionappproject.view_model.MedicineViewModel
 import com.example.diseasepredictionappproject.view_model.PredictionViewModel
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import java.time.LocalDate
 
 // 초기화 함수
@@ -288,6 +281,7 @@ fun EditScreen(
                                     id = editPredictionData?.id!!,
                                     diseaseName = editTitle,
                                     diseaseContent = editContent,
+                                    createDate = editPredictionData?.createDate,
                                     isBookMark = editPredictionData?.isBookMark,
                                     recommendMedication = editPredictionData?.recommendMedication
                                 )
@@ -309,7 +303,7 @@ fun EditScreen(
                                         seQesitm = "",
                                         depositMethodQesitm = "",
                                         openDe = LocalDate.now().toString(),
-                                        updateDe = "",
+                                        updateDe = LocalDate.now().toString(),
                                         itemImage = "",
                                         bizrno = "",
                                         isBookMark = false
@@ -341,19 +335,16 @@ fun EditScreen(
                         }
                     }
 
-                    /*navController.currentDestination?.route?.let {
-                        navController.navigate(
-                            it,
-                            NavOptions.Builder()
-                                .setLaunchSingleTop(true)  // 이미 존재하는 화면을 재사용하지 않음
-                                .setPopUpTo(navController.graph.startDestinationId, true)  // 이전 화면을 스택에서 제거
-                                .build()
-                        )
-                    }*/
-                    navController.popBackStack(
-                        route = navController.graph.startDestinationRoute ?: "home",
-                        inclusive = false
-                    )
+                    val targetRoute = when (editType) {
+                        "Home" -> MainActivity.BottomNavItem.Home.screenRoute
+                        "Saved" -> MainActivity.BottomNavItem.Saved.screenRoute
+                        else -> MainActivity.BottomNavItem.Home.screenRoute
+                    }
+
+                    navController.navigate(targetRoute) {
+                        popUpTo(targetRoute) { inclusive = true }
+                        launchSingleTop = true
+                    }
                 } else {
                     when {
                         editTitle.isEmpty() -> {
@@ -560,7 +551,7 @@ fun EditContent(
         textStyle = FontUtils.getTextStyle(fontSize.size),
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(min = 100.dp, max = 200.dp) // 최대 높이 제한
+            .heightIn(min = 50.dp, max = 200.dp) // 최대 높이 제한
             .verticalScroll(rememberScrollState()) // 내용이 넘칠 때 스크롤 가능
             .padding(10.dp),
         colors = OutlinedTextFieldDefaults.colors(

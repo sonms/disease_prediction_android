@@ -1,7 +1,6 @@
 package com.example.diseasepredictionappproject.view.bottom_navigation.settings
 
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.net.Uri
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -22,7 +21,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -62,9 +60,7 @@ fun SettingsScreen(
 
 
     LazyColumn (
-        modifier = Modifier
-            .padding(10.dp)
-
+        modifier = Modifier.wrapContentHeight()
     ) {
         item {
             SettingDivideItem(mainText = "글자 크기 조정", subText = "이곳을 눌러 글자 크기 조절하기", fontSize = fontSize) {
@@ -92,6 +88,7 @@ fun SettingsScreen(
                 }
             }
         }
+
     }
 
     if (isOpen) {
@@ -239,7 +236,7 @@ fun SettingDivideItem(
     when(mainText) {
         "문의하기" -> {
             Column (
-                modifier = Modifier.clickable { onClickItem() }
+                modifier = Modifier.clickable { onClickItem() }.padding(top = 10.dp)
             ) {
                 Text(
                     text = mainText,
@@ -258,14 +255,14 @@ fun SettingDivideItem(
                 HorizontalDivider(
                     modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
                     thickness = 2.dp,
-                    color = Color.Black.copy(0.5f)
+                    color = Color.Gray.copy(0.5f)
                 )
             }
         }
 
         else -> {
             Column (
-                modifier = Modifier.clickable { onClickItem() }
+                modifier = Modifier.clickable { onClickItem() }.padding(top = 10.dp)
             ) {
                 Text(
                     text = mainText,

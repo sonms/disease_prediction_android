@@ -7,7 +7,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
@@ -15,10 +14,7 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -40,10 +36,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.diseasepredictionappproject.data.HealthTipData
 import com.example.diseasepredictionappproject.data.Item
-import com.example.diseasepredictionappproject.loading.LoadingState
 import com.example.diseasepredictionappproject.room_db.PredictionEntity
 import com.example.diseasepredictionappproject.room_db.medicine.MedicineEntity
-import com.example.diseasepredictionappproject.ui.theme.blueColor6
 import com.example.diseasepredictionappproject.ui.theme.blueColor7
 import com.example.diseasepredictionappproject.utils.FontSize
 import com.example.diseasepredictionappproject.utils.FontUtils
@@ -321,7 +315,7 @@ fun RecentPredictionResult(
 
                 Text(text = "내용 : ${latestPrediction.diseaseContent}", modifier = Modifier.fillMaxWidth().padding(10.dp), color = blueColor7, style = FontUtils.getTextStyle(fontSize.size))
 
-                Text(text = "시행 날짜 : ${latestPrediction.createDate.split('T').first()}", modifier = Modifier.fillMaxWidth().padding(10.dp), color = blueColor7, style = FontUtils.getTextStyle(fontSize.size))
+                Text(text = "시행 날짜 : ${latestPrediction.createDate?.split('T')?.first()}", modifier = Modifier.fillMaxWidth().padding(10.dp), color = blueColor7, style = FontUtils.getTextStyle(fontSize.size))
             } else {
                 Text(text = "최근 예측 데이터가 없습니다.", fontWeight = FontWeight.Bold, style = FontUtils.getTextStyle(fontSize.size + 4f))
             }
