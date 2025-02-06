@@ -1,5 +1,6 @@
 package com.example.diseasepredictionappproject.view.bottom_navigation.edit
 
+import android.app.TimePickerDialog
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
@@ -22,15 +23,24 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDefaults
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.DisplayMode
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -52,6 +62,8 @@ import androidx.navigation.NavController
 import com.example.diseasepredictionappproject.MainActivity
 import com.example.diseasepredictionappproject.loading.LoadingState
 import com.example.diseasepredictionappproject.room_db.medicine.MedicineEntity
+import com.example.diseasepredictionappproject.ui.theme.blueColor2
+import com.example.diseasepredictionappproject.ui.theme.blueColor3
 import com.example.diseasepredictionappproject.ui.theme.blueColor4
 import com.example.diseasepredictionappproject.ui.theme.blueColor6
 import com.example.diseasepredictionappproject.utils.FontSize
@@ -59,7 +71,11 @@ import com.example.diseasepredictionappproject.utils.FontUtils
 import com.example.diseasepredictionappproject.utils.PreferenceDataStore
 import com.example.diseasepredictionappproject.view_model.MedicineViewModel
 import com.example.diseasepredictionappproject.view_model.PredictionViewModel
+import java.text.SimpleDateFormat
 import java.time.LocalDate
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 
 // 초기화 함수
 /*fun initializeData(
@@ -103,6 +119,7 @@ import java.time.LocalDate
     }
 }*/
 
+@OptIn(ExperimentalMaterial3Api::class)
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun EditScreen(
@@ -119,6 +136,10 @@ fun EditScreen(
 
     val fontSize by PreferenceDataStore.getFontSizeFlow(context).collectAsState(initial = FontSize.Medium)
 
+
+    var isOpenCalendar by remember {
+        mutableStateOf(false)
+    }
 
     var isError by remember {
         mutableStateOf(false)
@@ -137,6 +158,10 @@ fun EditScreen(
     }
 
     var editContent by remember {
+        mutableStateOf("")
+    }
+
+    var editSelectedDate by remember {
         mutableStateOf("")
     }
 
@@ -394,7 +419,29 @@ fun EditScreen(
                     fontSize
                 )
             }
+
+            item {
+                EditSchedule(
+                    fontSize,
+                    editSelectedDate
+                ) {
+                    isOpenCalendar = it
+                }
+            }
         }
+    }
+
+    if (isOpenCalendar) {
+        EditCalendar(
+            selectDate = "",
+            isOpenCalendar = isOpenCalendar,
+            onClickCancel = {
+
+            },
+            onClickConfirm = {
+                editSelectedDate = it
+            }
+        )
     }
 }
 
@@ -572,4 +619,148 @@ fun EditContent(
             )
         }
     )
+}
+
+@Composable
+fun EditSchedule(
+    fontSize: FontSize,
+    selectedDate : String,
+    onCalendarClick: (Boolean) -> Unit
+) {
+    var isOpenAlarm by remember {
+        mutableStateOf(false)
+    }
+
+    Row (
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 10.dp, end = 10.dp)
+    ) {
+        Text(text = "알림 설정", style = FontUtils.getTextStyle(fontSize.size))
+
+        Switch(
+            checked = isOpenAlarm,
+            onCheckedChange = {
+                isOpenAlarm = it
+            },
+            colors = SwitchDefaults.colors (
+                checkedTrackColor = blueColor4,
+                uncheckedTrackColor = Color.Gray
+            )
+        )
+    }
+
+    if (isOpenAlarm) {
+        Row (
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 10.dp, end = 10.dp)
+        ) {
+            if (selectedDate != "") {
+                Text(text = "시간 : $selectedDate", style = FontUtils.getTextStyle(fontSize.size))
+            } else {
+                Text(text = "시간 설정", style = FontUtils.getTextStyle(fontSize.size))
+            }
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            IconButton(onClick = { onCalendarClick(true) }) {
+                Icon(Icons.Default.DateRange, contentDescription = "time select")
+            }
+        }
+    }
+}
+
+@Composable
+@RequiresApi(Build.VERSION_CODES.O)
+@OptIn(ExperimentalMaterial3Api::class)
+fun EditCalendar(
+    selectDate: String?,
+    isOpenCalendar: Boolean,
+    onClickCancel: () -> Unit,
+    onClickConfirm: (yyyyMMddHHmm: String) -> Unit
+) {
+    if (isOpenCalendar) {
+        var showTimePicker by remember { mutableStateOf(false) }
+        var selectedDate by remember { mutableStateOf<String?>(null) }
+
+        // DatePickerDialog (날짜 선택)
+        DatePickerDialog(
+            modifier = Modifier.wrapContentSize(),
+            onDismissRequest = { onClickCancel() },
+            confirmButton = {},
+            colors = DatePickerDefaults.colors(
+                containerColor = Color.White,
+                weekdayContentColor = Color.Black,
+                titleContentColor = Color.Black,
+                disabledDayContentColor = blueColor2,
+                dayContentColor = Color.Black,
+                todayDateBorderColor = blueColor4,
+                selectedDayContainerColor = blueColor3
+            ),
+            shape = RoundedCornerShape(6.dp)
+        ) {
+            val currentDate = LocalDate.now()
+            val datePickerState = rememberDatePickerState(
+                yearRange = currentDate.year..currentDate.year + 1,
+                initialDisplayMode = DisplayMode.Picker,
+                initialSelectedDateMillis = System.currentTimeMillis()
+            )
+
+            DatePicker(state = datePickerState)
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+            ) {
+                Button(
+                    modifier = Modifier.wrapContentSize(),
+                    onClick = { onClickCancel() },
+                    colors = ButtonDefaults.buttonColors(containerColor = blueColor4, contentColor = Color.White),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text(text = "취소")
+                }
+
+                Spacer(modifier = Modifier.width(5.dp))
+
+                Button(
+                    modifier = Modifier.wrapContentSize(),
+                    onClick = {
+                        datePickerState.selectedDateMillis?.let { selectedDateMillis ->
+                            selectedDate = SimpleDateFormat("yyyyMMdd", Locale.getDefault())
+                                .format(Date(selectedDateMillis))
+
+                            // 날짜 선택 후 시간 선택 다이얼로그 표시
+                            showTimePicker = true
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = blueColor4, contentColor = Color.White),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text(text = "다음")
+                }
+            }
+        }
+
+        // TimePickerDialog (시간 선택)
+        if (showTimePicker) {
+            val context = LocalContext.current
+            val calendar = Calendar.getInstance()
+
+            TimePickerDialog(
+                context,
+                { _, hour, minute ->
+                    selectedDate?.let { date ->
+                        val selectedDateTime = "$date ${String.format("%02d:%02d", hour, minute)}"
+                        onClickConfirm(selectedDateTime) // yyyyMMdd HH:mm 형식으로 반환
+                    }
+                    showTimePicker = false
+                },
+                calendar.get(Calendar.HOUR_OF_DAY),
+                calendar.get(Calendar.MINUTE),
+                true // 24시간 형식 사용
+            ).show()
+        }
+    }
 }

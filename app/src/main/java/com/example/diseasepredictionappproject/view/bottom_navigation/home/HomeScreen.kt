@@ -311,7 +311,7 @@ fun RecentPredictionResult(
             },
         ) {
             if (latestPrediction != null) {
-                Text(text = "최근 예측 질병 : ${latestPrediction.diseaseName}", modifier = Modifier.fillMaxWidth().padding(10.dp), color = blueColor7, style = FontUtils.getTextStyle(fontSize.size))
+                Text(text = "최근 예측 질병 : ${latestPrediction.diseaseName}", modifier = Modifier.fillMaxWidth().padding(10.dp), color = blueColor7, style = FontUtils.getTextStyle(fontSize.size + 4f))
 
                 Text(text = "내용 : ${latestPrediction.diseaseContent}", modifier = Modifier.fillMaxWidth().padding(10.dp), color = blueColor7, style = FontUtils.getTextStyle(fontSize.size))
 
