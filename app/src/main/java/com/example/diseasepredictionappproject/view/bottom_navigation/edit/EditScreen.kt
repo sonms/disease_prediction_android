@@ -4,6 +4,7 @@ import android.app.TimePickerDialog
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -56,6 +57,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
@@ -423,23 +425,38 @@ fun EditScreen(
             item {
                 EditSchedule(
                     fontSize,
-                    editSelectedDate
-                ) {
-                    isOpenCalendar = it
-                }
+                    editSelectedDate,
+                    onCalendarClick = {
+                        isOpenCalendar = it
+                    },
+                    onClickDay = {
+                        if (it != "") {
+                            if (editSelectedDate != "") {
+                                editSelectedDate = ""
+                                editSelectedDate += "매주 ${it}요일"
+                            } else {
+                                editSelectedDate += "매주 ${it}요일"
+                            }
+                        } else {
+                            editSelectedDate = ""
+                        }
+                    }
+                )
             }
         }
     }
 
     if (isOpenCalendar) {
         EditCalendar(
-            selectDate = "",
+            selectDate = editSelectedDate,
             isOpenCalendar = isOpenCalendar,
+            fontSize = fontSize,
             onClickCancel = {
 
             },
             onClickConfirm = {
                 editSelectedDate = it
+                isOpenCalendar = false
             }
         )
     }
@@ -625,18 +642,26 @@ fun EditContent(
 fun EditSchedule(
     fontSize: FontSize,
     selectedDate : String,
-    onCalendarClick: (Boolean) -> Unit
+    onCalendarClick: (Boolean) -> Unit,
+    onClickDay : (String) -> Unit
 ) {
     var isOpenAlarm by remember {
         mutableStateOf(false)
     }
 
+    val dayItem = listOf<String>("일","월","화","수","목","금","토")
+    var isSelectDay by remember {
+        mutableStateOf("")
+    }
     Row (
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 10.dp, end = 10.dp)
+            .padding(start = 10.dp, end = 10.dp),
+        horizontalArrangement = Arrangement.Center
     ) {
         Text(text = "알림 설정", style = FontUtils.getTextStyle(fontSize.size))
+
+        Spacer(modifier = Modifier.weight(1f))
 
         Switch(
             checked = isOpenAlarm,
@@ -645,27 +670,66 @@ fun EditSchedule(
             },
             colors = SwitchDefaults.colors (
                 checkedTrackColor = blueColor4,
-                uncheckedTrackColor = Color.Gray
+                uncheckedTrackColor = Color.LightGray,
+                checkedThumbColor = Color.White,
+                uncheckedThumbColor = Color.White
             )
         )
     }
 
     if (isOpenAlarm) {
-        Row (
+        Column (
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 10.dp, end = 10.dp)
+                .padding(start = 10.dp, end = 10.dp),
         ) {
-            if (selectedDate != "") {
-                Text(text = "시간 : $selectedDate", style = FontUtils.getTextStyle(fontSize.size))
-            } else {
-                Text(text = "시간 설정", style = FontUtils.getTextStyle(fontSize.size))
+            Row {
+                if (selectedDate != "") {
+                    Text(text = "선택 날짜 : $selectedDate", style = FontUtils.getTextStyle(fontSize.size))
+                } else {
+                    Text(text = "날짜 및 시간 설정", style = FontUtils.getTextStyle(fontSize.size))
+                }
+
+                Spacer(modifier = Modifier.weight(1f))
+
+                IconButton(onClick = { onCalendarClick(true) }) {
+                    Icon(Icons.Default.DateRange, contentDescription = "time select")
+                }
             }
 
-            Spacer(modifier = Modifier.weight(1f))
 
-            IconButton(onClick = { onCalendarClick(true) }) {
-                Icon(Icons.Default.DateRange, contentDescription = "time select")
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center // Row 내부 요소들도 중앙 정렬
+            ) {
+                for (i in dayItem) {
+                    val textColor = when (i) {
+                        "일" -> Color.Red
+                        "토" -> Color.Blue
+                        else -> Color.Black
+                    }
+
+                    Text(
+                        text = i,
+                        style = FontUtils.getTextStyle(fontSize.size),
+                        color = textColor,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                            .clickable {
+                                isSelectDay = if (isSelectDay == i) {
+                                    onClickDay("")
+                                    ""
+                                } else {
+                                    onClickDay(i)
+                                    i
+                                }
+                            }
+                    )
+                }
             }
         }
     }
@@ -677,13 +741,13 @@ fun EditSchedule(
 fun EditCalendar(
     selectDate: String?,
     isOpenCalendar: Boolean,
+    fontSize: FontSize,
     onClickCancel: () -> Unit,
     onClickConfirm: (yyyyMMddHHmm: String) -> Unit
 ) {
     if (isOpenCalendar) {
         var showTimePicker by remember { mutableStateOf(false) }
-        var selectedDate by remember { mutableStateOf<String?>(null) }
-
+        var selectedDate by remember { mutableStateOf<String?>(LocalDate.now().toString()) }
         // DatePickerDialog (날짜 선택)
         DatePickerDialog(
             modifier = Modifier.wrapContentSize(),
@@ -709,36 +773,41 @@ fun EditCalendar(
 
             DatePicker(state = datePickerState)
 
-            Row(
+            Column (
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center,
+                verticalArrangement = Arrangement.Center
             ) {
-                Button(
-                    modifier = Modifier.wrapContentSize(),
-                    onClick = { onClickCancel() },
-                    colors = ButtonDefaults.buttonColors(containerColor = blueColor4, contentColor = Color.White),
-                    shape = RoundedCornerShape(12.dp)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
                 ) {
-                    Text(text = "취소")
-                }
+                    Button(
+                        modifier = Modifier.wrapContentSize(),
+                        onClick = { onClickCancel() },
+                        colors = ButtonDefaults.buttonColors(containerColor = blueColor4, contentColor = Color.White),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text(text = "취소")
+                    }
 
-                Spacer(modifier = Modifier.width(5.dp))
+                    Spacer(modifier = Modifier.width(5.dp))
 
-                Button(
-                    modifier = Modifier.wrapContentSize(),
-                    onClick = {
-                        datePickerState.selectedDateMillis?.let { selectedDateMillis ->
-                            selectedDate = SimpleDateFormat("yyyyMMdd", Locale.getDefault())
-                                .format(Date(selectedDateMillis))
+                    Button(
+                        modifier = Modifier.wrapContentSize(),
+                        onClick = {
+                            datePickerState.selectedDateMillis?.let { selectedDateMillis ->
+                                selectedDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                                    .format(Date(selectedDateMillis))
 
-                            // 날짜 선택 후 시간 선택 다이얼로그 표시
-                            showTimePicker = true
-                        }
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = blueColor4, contentColor = Color.White),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Text(text = "다음")
+                                // 날짜 선택 후 시간 선택 다이얼로그 표시
+                                showTimePicker = true
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = blueColor4, contentColor = Color.White),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text(text = "다음")
+                    }
                 }
             }
         }
@@ -753,13 +822,13 @@ fun EditCalendar(
                 { _, hour, minute ->
                     selectedDate?.let { date ->
                         val selectedDateTime = "$date ${String.format("%02d:%02d", hour, minute)}"
-                        onClickConfirm(selectedDateTime) // yyyyMMdd HH:mm 형식으로 반환
+                        onClickConfirm(selectedDateTime)
                     }
                     showTimePicker = false
                 },
                 calendar.get(Calendar.HOUR_OF_DAY),
                 calendar.get(Calendar.MINUTE),
-                true // 24시간 형식 사용
+                true
             ).show()
         }
     }
