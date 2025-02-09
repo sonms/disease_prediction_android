@@ -1,6 +1,3 @@
-import com.android.build.gradle.internal.cxx.configure.gradleLocalProperties
-import com.android.tools.r8.internal.kt
-
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -89,6 +86,9 @@ dependencies {
 
     //preference
     implementation("androidx.datastore:datastore-preferences:1.1.1")
+
+    //work
+    implementation("androidx.work:work-runtime-ktx:2.8.1")
 
     implementation("androidx.core:core-ktx:1.10.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.6")

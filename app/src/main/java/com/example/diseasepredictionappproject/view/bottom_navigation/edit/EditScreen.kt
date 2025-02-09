@@ -1,6 +1,7 @@
 package com.example.diseasepredictionappproject.view.bottom_navigation.edit
 
 import android.app.TimePickerDialog
+import android.content.Context
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
@@ -55,6 +56,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
@@ -62,12 +64,14 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.diseasepredictionappproject.MainActivity
+import com.example.diseasepredictionappproject.R
 import com.example.diseasepredictionappproject.loading.LoadingState
 import com.example.diseasepredictionappproject.room_db.medicine.MedicineEntity
 import com.example.diseasepredictionappproject.ui.theme.blueColor2
 import com.example.diseasepredictionappproject.ui.theme.blueColor3
 import com.example.diseasepredictionappproject.ui.theme.blueColor4
 import com.example.diseasepredictionappproject.ui.theme.blueColor6
+import com.example.diseasepredictionappproject.utils.AlarmHelper
 import com.example.diseasepredictionappproject.utils.FontSize
 import com.example.diseasepredictionappproject.utils.FontUtils
 import com.example.diseasepredictionappproject.utils.PreferenceDataStore
@@ -125,9 +129,9 @@ import java.util.Locale
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun EditScreen(
-    navController: NavController,
-    type : String,
-    data : String,
+    navController: NavController?,
+    type : String, //edit, add
+    data : String, //medicine, prediction
     id : String,
     predictionViewModel: PredictionViewModel = hiltViewModel(),
     medicineViewModel: MedicineViewModel = hiltViewModel()
@@ -138,8 +142,20 @@ fun EditScreen(
 
     val fontSize by PreferenceDataStore.getFontSizeFlow(context).collectAsState(initial = FontSize.Medium)
 
+    //알람
+    val alarmHelper = remember { AlarmHelper(context) }
+
+    val calendar = Calendar.getInstance()
+    var selectedDay by remember { mutableStateOf(calendar.get(Calendar.DAY_OF_WEEK)) }
+    var selectedHour by remember { mutableStateOf(calendar.get(Calendar.HOUR_OF_DAY)) }
+    var selectedMinute by remember { mutableStateOf(calendar.get(Calendar.MINUTE)) }
+    val requestCode = 1001
 
     var isOpenCalendar by remember {
+        mutableStateOf(false)
+    }
+
+    var isOpenTime by remember {
         mutableStateOf(false)
     }
 
@@ -166,6 +182,7 @@ fun EditScreen(
     var editSelectedDate by remember {
         mutableStateOf("")
     }
+
 
     /*if (type == "default" || type == "add") {
         LaunchedEffect(Unit) {
@@ -276,7 +293,7 @@ fun EditScreen(
             verticalAlignment = Alignment.Top,
             horizontalArrangement = Arrangement.Start
         ) {
-            IconButton(onClick = { navController.popBackStack() }) {
+            IconButton(onClick = { navController?.popBackStack() }) {
                 Column(
                     modifier = Modifier
                         .padding(5.dp)
@@ -362,13 +379,15 @@ fun EditScreen(
                         }
                     }
 
+                    alarmHelper.scheduleWeeklyAlarm(selectedDay, selectedHour, selectedMinute, requestCode, "반복 알람", "매주 ${getDayString(selectedDay)} ${selectedHour}:${selectedMinute} 알람")
+
                     val targetRoute = when (editType) {
                         "Home" -> MainActivity.BottomNavItem.Home.screenRoute
                         "Saved" -> MainActivity.BottomNavItem.Saved.screenRoute
                         else -> MainActivity.BottomNavItem.Home.screenRoute
                     }
 
-                    navController.navigate(targetRoute) {
+                    navController?.navigate(targetRoute) {
                         popUpTo(targetRoute) { inclusive = true }
                         launchSingleTop = true
                     }
@@ -433,13 +452,18 @@ fun EditScreen(
                         if (it != "") {
                             if (editSelectedDate != "") {
                                 editSelectedDate = ""
-                                editSelectedDate += "매주 ${it}요일"
+                                editSelectedDate += "매주 ${it.split(" ").first()}요일"
+                                selectedDay = it.split(" ").last().toInt()
                             } else {
-                                editSelectedDate += "매주 ${it}요일"
+                                editSelectedDate += "매주 ${it.split(" ").first()}요일"
+                                selectedDay = it.split(" ").last().toInt()
                             }
                         } else {
                             editSelectedDate = ""
                         }
+                    },
+                    onClickTime = {
+                        isOpenTime = it
                     }
                 )
             }
@@ -460,6 +484,17 @@ fun EditScreen(
             }
         )
     }
+
+    if (isOpenTime) {
+        EditTime (
+            showTimePicker = isOpenTime,
+            context = context,
+            onClickConfirm = {
+                isOpenTime = false
+                editSelectedDate += " / $it"
+            }
+        )
+    }
 }
 
 @Composable
@@ -469,7 +504,6 @@ fun EditTitle(
     isError : Boolean,
     fontSize: FontSize
 ) {
-    val textColor = MaterialTheme.colorScheme.primary // 동적으로 색상변경
     val isErrorCheck by rememberSaveable { mutableStateOf(isError) }
     val focusManager = LocalFocusManager.current
 
@@ -643,13 +677,14 @@ fun EditSchedule(
     fontSize: FontSize,
     selectedDate : String,
     onCalendarClick: (Boolean) -> Unit,
-    onClickDay : (String) -> Unit
+    onClickDay : (String) -> Unit,
+    onClickTime : (Boolean) -> Unit
 ) {
     var isOpenAlarm by remember {
         mutableStateOf(false)
     }
 
-    val dayItem = listOf<String>("일","월","화","수","목","금","토")
+    val dayItem = listOf("일","월","화","수","목","금","토")
     var isSelectDay by remember {
         mutableStateOf("")
     }
@@ -687,19 +722,19 @@ fun EditSchedule(
                 if (selectedDate != "") {
                     Text(text = "선택 날짜 : $selectedDate", style = FontUtils.getTextStyle(fontSize.size))
                 } else {
-                    Text(text = "날짜 및 시간 설정", style = FontUtils.getTextStyle(fontSize.size))
+                    Text(text = "날짜 설정", style = FontUtils.getTextStyle(fontSize.size))
                 }
 
                 Spacer(modifier = Modifier.weight(1f))
 
                 IconButton(onClick = { onCalendarClick(true) }) {
-                    Icon(Icons.Default.DateRange, contentDescription = "time select")
+                    Icon(Icons.Default.DateRange, contentDescription = "date select")
                 }
             }
 
 
 
-            Row(
+            Row (
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center // Row 내부 요소들도 중앙 정렬
@@ -724,11 +759,27 @@ fun EditSchedule(
                                     onClickDay("")
                                     ""
                                 } else {
-                                    onClickDay(i)
+                                    onClickDay("$i ${dayItem.indexOf(i)}")
                                     i
                                 }
                             }
                     )
+                }
+            }
+
+            Row (
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                if (selectedDate != "") {
+                    Text(text = "선택 시간 : $selectedDate", style = FontUtils.getTextStyle(fontSize.size))
+                } else {
+                    Text(text = "시간 설정", style = FontUtils.getTextStyle(fontSize.size))
+                }
+
+                Spacer(modifier = Modifier.weight(1f))
+
+                IconButton(onClick = { onClickTime(true) }) {
+                    Icon(painter = painterResource(id = R.drawable.baseline_access_time_24), contentDescription = "time select")
                 }
             }
         }
@@ -746,7 +797,6 @@ fun EditCalendar(
     onClickConfirm: (yyyyMMddHHmm: String) -> Unit
 ) {
     if (isOpenCalendar) {
-        var showTimePicker by remember { mutableStateOf(false) }
         var selectedDate by remember { mutableStateOf<String?>(LocalDate.now().toString()) }
         // DatePickerDialog (날짜 선택)
         DatePickerDialog(
@@ -798,38 +848,66 @@ fun EditCalendar(
                             datePickerState.selectedDateMillis?.let { selectedDateMillis ->
                                 selectedDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
                                     .format(Date(selectedDateMillis))
-
-                                // 날짜 선택 후 시간 선택 다이얼로그 표시
-                                showTimePicker = true
                             }
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = blueColor4, contentColor = Color.White),
                         shape = RoundedCornerShape(12.dp)
                     ) {
-                        Text(text = "다음")
+                        Text(text = "확인")
                     }
                 }
             }
         }
-
-        // TimePickerDialog (시간 선택)
-        if (showTimePicker) {
-            val context = LocalContext.current
-            val calendar = Calendar.getInstance()
-
-            TimePickerDialog(
-                context,
-                { _, hour, minute ->
-                    selectedDate?.let { date ->
-                        val selectedDateTime = "$date ${String.format("%02d:%02d", hour, minute)}"
-                        onClickConfirm(selectedDateTime)
-                    }
-                    showTimePicker = false
-                },
-                calendar.get(Calendar.HOUR_OF_DAY),
-                calendar.get(Calendar.MINUTE),
-                true
-            ).show()
-        }
     }
 }
+
+@RequiresApi(Build.VERSION_CODES.O)
+@Composable
+fun EditTime (
+    showTimePicker : Boolean,
+    context : Context,
+    onClickConfirm: (String) -> Unit
+) {
+    var isShowTimePicker by remember {
+        mutableStateOf(showTimePicker)
+    }
+    val selectedDate by remember { mutableStateOf<String?>(LocalDate.now().toString()) }
+
+    if (isShowTimePicker) {
+        val calendar = Calendar.getInstance()
+        TimePickerDialog(
+            context,
+            { _, hour, minute ->
+                selectedDate?.let { date ->
+                    val selectedDateTime = "$date ${String.format("%02d:%02d", hour, minute)}"
+                    onClickConfirm(selectedDateTime)
+                }
+                isShowTimePicker = false
+            },
+            calendar.get(Calendar.HOUR_OF_DAY),
+            calendar.get(Calendar.MINUTE),
+            true
+        ).show()
+    }
+}
+
+fun getDayString(day: Int): String {
+    return when (day) {
+        Calendar.SUNDAY -> "일요일"
+        Calendar.MONDAY -> "월요일"
+        Calendar.TUESDAY -> "화요일"
+        Calendar.WEDNESDAY -> "수요일"
+        Calendar.THURSDAY -> "목요일"
+        Calendar.FRIDAY -> "금요일"
+        Calendar.SATURDAY -> "토요일"
+        else -> "알 수 없음"
+    }
+}
+
+/*
+@RequiresApi(Build.VERSION_CODES.O)
+@Composable
+@Preview(showBackground = true)
+fun EditPreview() {
+    EditScreen(navController = null, type = "add", data = "prediction", id = "-1")
+}*/

@@ -1,27 +1,31 @@
 package com.example.diseasepredictionappproject
 
+import android.app.AlarmManager
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
+import android.provider.Settings
+import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.Interaction
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
@@ -29,7 +33,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
@@ -44,9 +50,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.platform.LocalContext
@@ -56,7 +64,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
@@ -127,6 +136,10 @@ fun MainContent() {
     val currentRoute = navBackStackEntry?.destination?.route
     val context = LocalContext.current
     val fontSize by PreferenceDataStore.getFontSizeFlow(context).collectAsState(initial = FontSize.Medium)
+    var isPermissionState by remember {
+        mutableStateOf(false)
+    }
+
     Scaffold(
         topBar = {
            if (currentRoute in listOf("home","prediction","bookmark","settings")) {
@@ -155,6 +168,16 @@ fun MainContent() {
         Box(Modifier.padding(it)) {
             NavigationGraph(navController = navController)
         }
+    }
+
+    if (isPermissionState) {
+        RequestNotificationPermission(
+            context,
+            fontSize,
+            onClickBtn = {
+                isPermissionState = false
+            }
+        )
     }
 }
 
@@ -493,6 +516,113 @@ fun EditFab (
         onClick = { onClickFab() }
     ) {
         Icon(Icons.Default.Add, contentDescription = "edit data")
+    }
+}
+
+@Composable
+fun RequestNotificationPermission (
+    context: Context,
+    fontSize: FontSize,
+    onClickBtn : (Boolean) -> Unit
+) {
+    var permissionState by remember { mutableStateOf(checkNotificationPermission(context)) }
+
+    val requestPermissionLauncher =
+        rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+            permissionState = isGranted
+        }
+
+    if (permissionState) {
+        Toast.makeText(context, "알림 권한이 허용되었습니다.", Toast.LENGTH_SHORT).show()
+        onClickBtn(true)
+    } else {
+        PermissionDialog(
+            item = permissionState,
+            fontSize = fontSize,
+            onCancelClick = {
+                Toast.makeText(context, "알림 권한이 비허용 되었습니다.", Toast.LENGTH_SHORT).show()
+                onClickBtn(false)
+            },
+            onConfirmClick = {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    requestPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+                    onClickBtn(true)
+                }
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    val alarmManager = ContextCompat.getSystemService(context, AlarmManager::class.java)
+                    if (alarmManager?.canScheduleExactAlarms() == false) {
+                        Intent().also { intent ->
+                            intent.action = Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM
+                            context.startActivity(intent)
+                        }
+                        onClickBtn(true)
+                    }
+                }
+            }
+        )
+    }
+}
+
+private fun checkNotificationPermission(context : Context): Boolean {
+    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        ContextCompat.checkSelfPermission(context, android.Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+    } else {
+        true
+    }
+}
+
+@Composable
+fun PermissionDialog(
+    item : Boolean,
+    onConfirmClick : (Boolean) -> Unit,
+    onCancelClick : () -> Unit,
+    fontSize: FontSize
+) {
+    Dialog(
+        onDismissRequest = { onCancelClick() }
+    ) {
+        Card (
+            modifier = Modifier
+                .width(320.dp)
+                .wrapContentHeight()
+                .padding(10.dp),
+            shape = RoundedCornerShape(8.dp),
+        ) {
+            Text(
+                modifier = Modifier.padding(top = 20.dp, start = 20.dp, bottom = 10.dp),
+                text = "알림 권한이 필요합니다",
+                fontWeight = FontWeight.SemiBold,
+                style = FontUtils.getTextStyle(fontSize.size + 4f)
+            )
+
+            Row (
+                modifier = Modifier
+                    .align(Alignment.End)
+                    .padding(20.dp)
+            ) {
+                Button(
+                    modifier = Modifier.padding(end = 5.dp),
+                    onClick = { onCancelClick() },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = blueColor4,
+                        contentColor = Color.White
+                    ),
+                ) {
+                    Text(text = "취소", style = FontUtils.getTextStyle(fontSize.size - 2f))
+                }
+
+                Button(
+                    onClick = { onConfirmClick(item) },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = blueColor4, // 버튼 배경색
+                        contentColor = Color.White // 텍스트 색상 설정
+                    ),
+                ) {
+                    Text(text = "확인", style = FontUtils.getTextStyle(fontSize.size - 2f))
+                }
+            }
+        }
     }
 }
 
