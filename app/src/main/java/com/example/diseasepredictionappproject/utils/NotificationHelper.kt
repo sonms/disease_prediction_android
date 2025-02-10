@@ -6,6 +6,7 @@ import android.app.NotificationManager
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
+import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -14,6 +15,7 @@ import kotlin.random.Random
 
 class NotificationHelper(private val context: Context) {
     private val channelId = "alarm_channel"
+    private val TAG = "NotificationHelper"
 
     init {
         createNotificationChannel()
@@ -28,10 +30,17 @@ class NotificationHelper(private val context: Context) {
             )
             val manager = context.getSystemService(NotificationManager::class.java)
             manager.createNotificationChannel(channel)
+            Log.d(TAG, " 알림 채널 생성 완료")
         }
     }
 
     fun showNotification(title: String, message: String) {
+        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            Log.w(TAG, "⚠️ 알림 권한 없음 - 알림 표시 불가")
+            return
+        }
+
+        val notificationId = Random.nextInt()
         val notificationBuilder = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setContentTitle(title)
@@ -40,14 +49,8 @@ class NotificationHelper(private val context: Context) {
             .setAutoCancel(true)
 
         val manager = NotificationManagerCompat.from(context)
-        if (ActivityCompat.checkSelfPermission(
-                context,
-                Manifest.permission.POST_NOTIFICATIONS
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            return
-        }
-        //같은 id면 알림 덮어씌워짐, 다른id면 알림 여러개
-        manager.notify(Random.nextInt(), notificationBuilder.build())
+        manager.notify(notificationId, notificationBuilder.build())
+
+        Log.d(TAG, " 알림 표시 완료: ID = $notificationId, Title = $title")
     }
 }

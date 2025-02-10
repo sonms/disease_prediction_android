@@ -1,12 +1,13 @@
 package com.example.diseasepredictionappproject.view.bottom_navigation.edit
 
-import android.app.TimePickerDialog
-import android.content.Context
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -42,11 +43,15 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TimePicker
 import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -61,6 +66,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.diseasepredictionappproject.MainActivity
@@ -147,8 +154,6 @@ fun EditScreen(
 
     val calendar = Calendar.getInstance()
     var selectedDay by remember { mutableStateOf(calendar.get(Calendar.DAY_OF_WEEK)) }
-    var selectedHour by remember { mutableStateOf(calendar.get(Calendar.HOUR_OF_DAY)) }
-    var selectedMinute by remember { mutableStateOf(calendar.get(Calendar.MINUTE)) }
     val requestCode = 1001
 
     var isOpenCalendar by remember {
@@ -180,6 +185,14 @@ fun EditScreen(
     }
 
     var editSelectedDate by remember {
+        mutableStateOf("")
+    }
+
+    var editSelectedTime by remember {
+        mutableStateOf("")
+    }
+
+    var alarmContent by remember {
         mutableStateOf("")
     }
 
@@ -379,7 +392,13 @@ fun EditScreen(
                         }
                     }
 
-                    alarmHelper.scheduleWeeklyAlarm(selectedDay, selectedHour, selectedMinute, requestCode, "반복 알람", "매주 ${getDayString(selectedDay)} ${selectedHour}:${selectedMinute} 알람")
+                    val message = alarmContent.ifEmpty {
+                        editTitle
+                    }
+
+                    Log.e("editSelectedTime", editSelectedTime)
+
+                    alarmHelper.scheduleWeeklyAlarm(selectedDay, editSelectedTime.split(":").first().trim().toInt(), editSelectedTime.split(":").last().trim().toInt(), requestCode, "알람", message)
 
                     val targetRoute = when (editType) {
                         "Home" -> MainActivity.BottomNavItem.Home.screenRoute
@@ -392,7 +411,14 @@ fun EditScreen(
                         launchSingleTop = true
                     }
                 } else {
-                    when {
+                    if (editTitle.isEmpty()) {
+                        isError = true
+                    }
+
+                    if (editType.isEmpty()) {
+                        isTypeError = true
+                    }
+                    /*when {
                         editTitle.isEmpty() -> {
                             isError = true
                         }
@@ -400,7 +426,7 @@ fun EditScreen(
                         editType.isEmpty() -> {
                             isTypeError = true
                         }
-                    }
+                    }*/
                 }
             }) {
                 Icon(Icons.Default.Check, contentDescription = "edit complete")
@@ -433,6 +459,7 @@ fun EditScreen(
 
             item {
                 EditContent(
+                    type = "editContent",
                     editContent,
                     onTextChange = {
                         editContent = it
@@ -445,6 +472,8 @@ fun EditScreen(
                 EditSchedule(
                     fontSize,
                     editSelectedDate,
+                    editSelectedTime,
+                    alarmContent,
                     onCalendarClick = {
                         isOpenCalendar = it
                     },
@@ -464,6 +493,9 @@ fun EditScreen(
                     },
                     onClickTime = {
                         isOpenTime = it
+                    },
+                    onTextChange = {
+                        alarmContent = it
                     }
                 )
             }
@@ -476,7 +508,7 @@ fun EditScreen(
             isOpenCalendar = isOpenCalendar,
             fontSize = fontSize,
             onClickCancel = {
-
+                isOpenCalendar = false
             },
             onClickConfirm = {
                 editSelectedDate = it
@@ -488,10 +520,13 @@ fun EditScreen(
     if (isOpenTime) {
         EditTime (
             showTimePicker = isOpenTime,
-            context = context,
+            fontSize = fontSize,
             onClickConfirm = {
                 isOpenTime = false
-                editSelectedDate += " / $it"
+                editSelectedTime = it
+            },
+            onClickCancel = {
+                isOpenTime = false
             }
         )
     }
@@ -636,11 +671,20 @@ fun EditType (
 
 @Composable
 fun EditContent(
+    type : String,
     textContent: String,
     onTextChange: (String) -> Unit,
     fontSize : FontSize
 ) {
     val focusManager = LocalFocusManager.current
+    val typeContentText by remember {
+        mutableStateOf( if (type == "editContent") {
+            "필요한 내용을 적어주세요 (선택사항)"
+        } else {
+            "알람에 필요한 내용을 적어주세요 (선택사항)"
+        })
+    }
+
 
     OutlinedTextField(
         value = textContent,
@@ -663,7 +707,7 @@ fun EditContent(
         ),
         label = {
             Text(
-                text = "필요한 내용을 적어주세요 (선택사항)",
+                text = typeContentText,
                 fontWeight = FontWeight.Bold,
                 style = FontUtils.getTextStyle(fontSize.size),
                 color = Color.Black.copy(alpha = 0.5f)
@@ -676,25 +720,34 @@ fun EditContent(
 fun EditSchedule(
     fontSize: FontSize,
     selectedDate : String,
+    selectedTime : String,
+    alarmContent : String,
     onCalendarClick: (Boolean) -> Unit,
     onClickDay : (String) -> Unit,
-    onClickTime : (Boolean) -> Unit
+    onClickTime : (Boolean) -> Unit,
+    onTextChange: (String) -> Unit
 ) {
     var isOpenAlarm by remember {
         mutableStateOf(false)
     }
 
+    var alarmMessage by remember {
+        mutableStateOf(alarmContent)
+    }
+
     val dayItem = listOf("일","월","화","수","목","금","토")
-    var isSelectDay by remember {
+    var selectDay by remember {
         mutableStateOf("")
     }
     Row (
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 10.dp, end = 10.dp),
-        horizontalArrangement = Arrangement.Center
+            .padding(start = 10.dp, end = 10.dp, top = 20.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(text = "알림 설정", style = FontUtils.getTextStyle(fontSize.size))
+        //알림설정
+        Text(text = "알림 설정", style = FontUtils.getTextStyle(fontSize.size), textAlign = TextAlign.Center)
 
         Spacer(modifier = Modifier.weight(1f))
 
@@ -707,22 +760,30 @@ fun EditSchedule(
                 checkedTrackColor = blueColor4,
                 uncheckedTrackColor = Color.LightGray,
                 checkedThumbColor = Color.White,
-                uncheckedThumbColor = Color.White
+                uncheckedThumbColor = Color.White,
+                uncheckedBorderColor = Color.LightGray
             )
         )
     }
 
     if (isOpenAlarm) {
+        //날짜 설정
         Column (
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(start = 10.dp, end = 10.dp),
         ) {
-            Row {
+            Row (
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 20.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 if (selectedDate != "") {
-                    Text(text = "선택 날짜 : $selectedDate", style = FontUtils.getTextStyle(fontSize.size))
+                    Text(text = "선택 날짜 : $selectedDate", style = FontUtils.getTextStyle(fontSize.size), textAlign = TextAlign.Center, fontWeight = FontWeight.Bold)
                 } else {
-                    Text(text = "날짜 설정", style = FontUtils.getTextStyle(fontSize.size))
+                    Text(text = "날짜 설정", style = FontUtils.getTextStyle(fontSize.size), textAlign = TextAlign.Center, fontWeight = FontWeight.Bold)
                 }
 
                 Spacer(modifier = Modifier.weight(1f))
@@ -754,8 +815,12 @@ fun EditSchedule(
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxWidth()
-                            .clickable {
-                                isSelectDay = if (isSelectDay == i) {
+                            .clickable(
+                                //기본 파장 효과제거
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                            ) {
+                                selectDay = if (selectDay == i) {
                                     onClickDay("")
                                     ""
                                 } else {
@@ -763,17 +828,29 @@ fun EditSchedule(
                                     i
                                 }
                             }
+                            .background(
+                                if (selectDay == i) {
+                                    blueColor4
+                                } else {
+                                    Color.Transparent
+                                }, RoundedCornerShape(8.dp)
+                            ),
+                        fontWeight = FontWeight.Bold
                     )
                 }
             }
 
             Row (
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 10.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                if (selectedDate != "") {
-                    Text(text = "선택 시간 : $selectedDate", style = FontUtils.getTextStyle(fontSize.size))
+                if (selectedTime != "") {
+                    Text(text = "선택 시간 : $selectedTime", style = FontUtils.getTextStyle(fontSize.size) , fontWeight = FontWeight.Bold)
                 } else {
-                    Text(text = "시간 설정", style = FontUtils.getTextStyle(fontSize.size))
+                    Text(text = "시간 설정", style = FontUtils.getTextStyle(fontSize.size) , fontWeight = FontWeight.Bold)
                 }
 
                 Spacer(modifier = Modifier.weight(1f))
@@ -783,6 +860,17 @@ fun EditSchedule(
                 }
             }
         }
+
+
+        EditContent (
+            type = "alarmContent",
+            alarmContent,
+            onTextChange = {
+                alarmMessage = it
+                onTextChange(it)
+            },
+            fontSize
+        )
     }
 }
 
@@ -796,13 +884,22 @@ fun EditCalendar(
     onClickCancel: () -> Unit,
     onClickConfirm: (yyyyMMddHHmm: String) -> Unit
 ) {
-    if (isOpenCalendar) {
+    var isOpen by remember {
+        mutableStateOf(isOpenCalendar)
+    }
+
+    if (isOpen) {
         var selectedDate by remember { mutableStateOf<String?>(LocalDate.now().toString()) }
         // DatePickerDialog (날짜 선택)
         DatePickerDialog(
             modifier = Modifier.wrapContentSize(),
-            onDismissRequest = { onClickCancel() },
-            confirmButton = {},
+            onDismissRequest = {
+                onClickCancel()
+                isOpen = false
+            },
+            confirmButton = {
+
+            },
             colors = DatePickerDefaults.colors(
                 containerColor = Color.White,
                 weekdayContentColor = Color.Black,
@@ -833,11 +930,14 @@ fun EditCalendar(
                 ) {
                     Button(
                         modifier = Modifier.wrapContentSize(),
-                        onClick = { onClickCancel() },
+                        onClick = {
+                            onClickCancel()
+                            isOpen = false
+                        },
                         colors = ButtonDefaults.buttonColors(containerColor = blueColor4, contentColor = Color.White),
                         shape = RoundedCornerShape(12.dp)
                     ) {
-                        Text(text = "취소")
+                        Text(text = "취소", style = FontUtils.getTextStyle(fontSize.size))
                     }
 
                     Spacer(modifier = Modifier.width(5.dp))
@@ -849,11 +949,13 @@ fun EditCalendar(
                                 selectedDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
                                     .format(Date(selectedDateMillis))
                             }
+                            isOpen = false
+                            onClickConfirm(selectedDate.toString())
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = blueColor4, contentColor = Color.White),
                         shape = RoundedCornerShape(12.dp)
                     ) {
-                        Text(text = "확인")
+                        Text(text = "확인",style = FontUtils.getTextStyle(fontSize.size))
                     }
                 }
             }
@@ -861,33 +963,91 @@ fun EditCalendar(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun EditTime (
-    showTimePicker : Boolean,
-    context : Context,
-    onClickConfirm: (String) -> Unit
+fun EditTime(
+    showTimePicker: Boolean,
+    fontSize : FontSize,
+    onClickConfirm: (String) -> Unit,
+    onClickCancel: () -> Unit
 ) {
-    var isShowTimePicker by remember {
-        mutableStateOf(showTimePicker)
-    }
-    val selectedDate by remember { mutableStateOf<String?>(LocalDate.now().toString()) }
+    var isShowTimePicker by remember { mutableStateOf(showTimePicker) }
+
+    val calendar = Calendar.getInstance()
+    var selectedHour by remember { mutableIntStateOf(calendar.get(Calendar.HOUR_OF_DAY)) }
+    var selectedMinute by remember { mutableIntStateOf(calendar.get(Calendar.MINUTE)) }
+    val timeState = rememberTimePickerState(
+        initialHour = selectedHour,
+        initialMinute = selectedMinute
+    )
 
     if (isShowTimePicker) {
-        val calendar = Calendar.getInstance()
-        TimePickerDialog(
-            context,
-            { _, hour, minute ->
-                selectedDate?.let { date ->
-                    val selectedDateTime = "$date ${String.format("%02d:%02d", hour, minute)}"
-                    onClickConfirm(selectedDateTime)
-                }
+        Dialog(
+            onDismissRequest = {
+                onClickCancel()
                 isShowTimePicker = false
             },
-            calendar.get(Calendar.HOUR_OF_DAY),
-            calendar.get(Calendar.MINUTE),
-            true
-        ).show()
+            properties = DialogProperties(
+                usePlatformDefaultWidth = false // 플랫폼 기본 너비를 사용하지 않음
+            )
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(start = 20.dp, end = 20.dp)
+                    .background(Color.Black.copy(alpha = 0.5f))
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
+                    ) {
+                        onClickCancel()
+                        isShowTimePicker = false
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    modifier = Modifier
+                        .background(color = Color.White, shape = RoundedCornerShape(12.dp))
+                        .padding(top = 28.dp, start = 20.dp, end = 20.dp, bottom = 12.dp),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    TimePicker(state = timeState)
+
+                    Row(
+                        modifier = Modifier
+                            .padding(top = 12.dp)
+                            .fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        TextButton(onClick = {
+                            onClickCancel()
+                            isShowTimePicker = false
+                        }) {
+                            Text(
+                                text = "취소",
+                                style = FontUtils.getTextStyle(fontSize.size),
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        TextButton(onClick = {
+                            selectedHour = timeState.hour
+                            selectedMinute = timeState.minute
+                            val formatTime = String.format("%02d:%02d", selectedHour, selectedMinute)
+                            onClickConfirm(formatTime)
+                            isShowTimePicker = false
+                        }) {
+                            Text(
+                                text = "확인",
+                                style = FontUtils.getTextStyle(fontSize.size),
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
