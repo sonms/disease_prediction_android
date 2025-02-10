@@ -315,7 +315,7 @@ fun RecentPredictionResult(
 
                 Text(text = "내용 : ${latestPrediction.diseaseContent}", modifier = Modifier.fillMaxWidth().padding(10.dp), color = blueColor7, style = FontUtils.getTextStyle(fontSize.size))
 
-                Text(text = "시행 날짜 : ${latestPrediction.createDate?.split('T')?.first()}", modifier = Modifier.fillMaxWidth().padding(10.dp), color = blueColor7, style = FontUtils.getTextStyle(fontSize.size))
+                Text(text = "시행 날짜 : ${latestPrediction.createDate.split('T').first()}", modifier = Modifier.fillMaxWidth().padding(10.dp), color = blueColor7, style = FontUtils.getTextStyle(fontSize.size))
             } else {
                 Text(text = "최근 예측 데이터가 없습니다.", fontWeight = FontWeight.Bold, style = FontUtils.getTextStyle(fontSize.size + 4f))
             }

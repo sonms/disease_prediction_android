@@ -21,14 +21,13 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -38,7 +37,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -464,18 +462,23 @@ fun DeleteItemDialog(
                     .align(Alignment.End)
                     .padding(20.dp)
             ) {
-                Button(
+                TextButton(
                     modifier = Modifier.padding(end = 5.dp),
-                    onClick = { onCancelClick() },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = blueColor4, // 버튼 배경색
-                        contentColor = Color.White // 텍스트 색상 설정
-                    ),
-                ) {
-                    Text(text = "취소", style = FontUtils.getTextStyle(fontSize.size - 2f))
+                    onClick = {
+                    onCancelClick()
+                }) {
+                    Text(text = "취소", style = FontUtils.getTextStyle(fontSize.size - 2f), color = blueColor4, )
                 }
 
-                Button(
+                TextButton(
+                    modifier = Modifier.padding(end = 5.dp),
+                    onClick = {
+                        onConfirmClick(item)
+                    }) {
+                    Text(text = "확인", style = FontUtils.getTextStyle(fontSize.size - 2f), color = blueColor4, )
+                }
+
+                /*Button(
                     onClick = { onConfirmClick(item) },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = blueColor4, // 버튼 배경색
@@ -483,7 +486,7 @@ fun DeleteItemDialog(
                     ),
                 ) {
                     Text(text = "확인", style = FontUtils.getTextStyle(fontSize.size - 2f))
-                }
+                }*/
             }
         }
     }
@@ -518,7 +521,22 @@ fun DeleteMedicineItemDialog(
                     .align(Alignment.End)
                     .padding(20.dp)
             ) {
-                Button(
+                TextButton(
+                    modifier = Modifier.padding(end = 5.dp),
+                    onClick = {
+                        onCancelClick()
+                    }) {
+                    Text(text = "취소", style = FontUtils.getTextStyle(fontSize.size - 2f), color = blueColor4, )
+                }
+
+                TextButton(
+                    modifier = Modifier.padding(end = 5.dp),
+                    onClick = {
+                        onConfirmClick(item)
+                    }) {
+                    Text(text = "확인", style = FontUtils.getTextStyle(fontSize.size - 2f), color = blueColor4, )
+                }
+                /*Button(
                     modifier = Modifier.padding(end = 5.dp),
                     onClick = { onCancelClick() },
                     colors = ButtonDefaults.buttonColors(
@@ -537,7 +555,7 @@ fun DeleteMedicineItemDialog(
                     ),
                 ) {
                     Text(text = "확인", style = FontUtils.getTextStyle(fontSize.size - 2f))
-                }
+                }*/
             }
         }
     }
