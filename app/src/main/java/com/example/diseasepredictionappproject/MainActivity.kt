@@ -14,6 +14,8 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.Interaction
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -33,8 +35,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
@@ -47,6 +47,7 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -65,6 +66,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
@@ -79,6 +81,7 @@ import com.example.diseasepredictionappproject.ui.theme.DiseasePredictionAppProj
 import com.example.diseasepredictionappproject.ui.theme.blueColor4
 import com.example.diseasepredictionappproject.ui.theme.blueColor5
 import com.example.diseasepredictionappproject.ui.theme.blueColor7
+import com.example.diseasepredictionappproject.ui.theme.blueColor8
 import com.example.diseasepredictionappproject.utils.FontSize
 import com.example.diseasepredictionappproject.utils.FontUtils
 import com.example.diseasepredictionappproject.utils.PreferenceDataStore
@@ -136,8 +139,9 @@ fun MainContent() {
     val currentRoute = navBackStackEntry?.destination?.route
     val context = LocalContext.current
     val fontSize by PreferenceDataStore.getFontSizeFlow(context).collectAsState(initial = FontSize.Medium)
+
     var isPermissionState by remember {
-        mutableStateOf(false)
+        mutableStateOf(checkNotificationPermission(context))
     }
 
     Scaffold(
@@ -170,12 +174,12 @@ fun MainContent() {
         }
     }
 
-    if (isPermissionState) {
+    if (!isPermissionState) {
         RequestNotificationPermission(
             context,
             fontSize,
             onClickBtn = {
-                isPermissionState = false
+                isPermissionState = true
             }
         )
     }
@@ -541,12 +545,12 @@ fun RequestNotificationPermission (
             fontSize = fontSize,
             onCancelClick = {
                 Toast.makeText(context, "알림 권한이 비허용 되었습니다.", Toast.LENGTH_SHORT).show()
-                onClickBtn(false)
+                onClickBtn(true)
             },
             onConfirmClick = {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     requestPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
-                    onClickBtn(true)
+                    onClickBtn(false)
                 }
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -556,7 +560,7 @@ fun RequestNotificationPermission (
                             intent.action = Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM
                             context.startActivity(intent)
                         }
-                        onClickBtn(true)
+                        onClickBtn(false)
                     }
                 }
             }
@@ -574,52 +578,63 @@ private fun checkNotificationPermission(context : Context): Boolean {
 
 @Composable
 fun PermissionDialog(
-    item : Boolean,
-    onConfirmClick : (Boolean) -> Unit,
-    onCancelClick : () -> Unit,
+    item: Boolean,
+    onConfirmClick: (Boolean) -> Unit,
+    onCancelClick: () -> Unit,
     fontSize: FontSize
 ) {
     Dialog(
-        onDismissRequest = { onCancelClick() }
+        onDismissRequest = { onCancelClick() },
+        properties = DialogProperties(
+            usePlatformDefaultWidth = false // 플랫폼 기본 너비를 사용하지 않음
+        )
     ) {
-        Card (
+        Box(
             modifier = Modifier
-                .width(320.dp)
-                .wrapContentHeight()
-                .padding(10.dp),
-            shape = RoundedCornerShape(8.dp),
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.4f))
+                .clickable(onClick = {
+                    onCancelClick()
+                })
         ) {
-            Text(
-                modifier = Modifier.padding(top = 20.dp, start = 20.dp, bottom = 10.dp),
-                text = "알림 권한이 필요합니다",
-                fontWeight = FontWeight.SemiBold,
-                style = FontUtils.getTextStyle(fontSize.size + 4f)
-            )
-
-            Row (
+            Card(
                 modifier = Modifier
-                    .align(Alignment.End)
-                    .padding(20.dp)
+                    .width(320.dp)
+                    .wrapContentHeight()
+                    .padding(10.dp)
+                    .align(Alignment.Center), // 카드를 중앙에 배치
+                shape = RoundedCornerShape(8.dp),
             ) {
-                Button(
-                    modifier = Modifier.padding(end = 5.dp),
-                    onClick = { onCancelClick() },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = blueColor4,
-                        contentColor = Color.White
-                    ),
-                ) {
-                    Text(text = "취소", style = FontUtils.getTextStyle(fontSize.size - 2f))
-                }
+                Column {
+                    Text(
+                        modifier = Modifier.padding(top = 20.dp, start = 20.dp, bottom = 10.dp),
+                        text = "설정한 알람의 사용을 위해 알림 권한을 허용하시겠습니까?",
+                        fontWeight = FontWeight.SemiBold,
+                        style = FontUtils.getTextStyle(fontSize.size + 4f)
+                    )
 
-                Button(
-                    onClick = { onConfirmClick(item) },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = blueColor4, // 버튼 배경색
-                        contentColor = Color.White // 텍스트 색상 설정
-                    ),
-                ) {
-                    Text(text = "확인", style = FontUtils.getTextStyle(fontSize.size - 2f))
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 20.dp),
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        TextButton(
+                            modifier = Modifier.padding(end = 5.dp),
+                            onClick = {
+                                onCancelClick()
+                            }) {
+                            Text(text = "거부", style = FontUtils.getTextStyle(fontSize.size - 2f), color = blueColor8)
+                        }
+
+                        TextButton(
+                            modifier = Modifier.padding(end = 5.dp),
+                            onClick = {
+                                onConfirmClick(item)
+                            }) {
+                            Text(text = "허용", style = FontUtils.getTextStyle(fontSize.size - 2f), color = blueColor8)
+                        }
+                    }
                 }
             }
         }
