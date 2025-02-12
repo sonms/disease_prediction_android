@@ -3,7 +3,10 @@ package com.example.diseasepredictionappproject.view.bottom_navigation.settings
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -12,6 +15,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -19,13 +24,17 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
+import com.example.diseasepredictionappproject.BuildConfig
+import com.example.diseasepredictionappproject.ui.theme.blueColor4
 import com.example.diseasepredictionappproject.utils.FontSize
 import com.example.diseasepredictionappproject.utils.FontUtils
 import com.example.diseasepredictionappproject.utils.PreferenceDataStore
@@ -51,6 +60,11 @@ fun SettingsScreen(
     val fontSize by PreferenceDataStore.getFontSizeFlow(context).collectAsState(initial = FontSize.Medium)
 
 
+    //알림
+    var isAlarmCheck by remember {
+        mutableStateOf(false)
+    }
+
 
 
     LazyColumn (
@@ -63,10 +77,40 @@ fun SettingsScreen(
         }
 
         item {
+            Row (
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 10.dp, end = 10.dp, top = 20.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                //알림설정
+                Text(text = "알림 설정", style = FontUtils.getTextStyle(fontSize.size), textAlign = TextAlign.Center)
+
+                Spacer(modifier = Modifier.weight(1f))
+
+                Switch(
+                    checked = isAlarmCheck,
+                    onCheckedChange = {
+                        isAlarmCheck = it
+                    },
+                    colors = SwitchDefaults.colors (
+                        checkedTrackColor = blueColor4,
+                        uncheckedTrackColor = Color.LightGray,
+                        checkedThumbColor = Color.White,
+                        uncheckedThumbColor = Color.White,
+                        uncheckedBorderColor = Color.LightGray
+                    )
+                )
+            }
+
+        }
+
+        item {
             SettingDivideItem(mainText = "문의하기", subText = "Gmail로 이메일 보내기", fontSize = fontSize) {
                 val intent = Intent(Intent.ACTION_SENDTO).apply {
                     data = Uri.parse("mailto:")
-                    putExtra(Intent.EXTRA_EMAIL, arrayOf("smsdia412@gmail.com")) // 받는 사람
+                    putExtra(Intent.EXTRA_EMAIL, arrayOf(BuildConfig.Inquire)) // 받는 사람
                     putExtra(Intent.EXTRA_SUBJECT, "문의 사항")
                 }
 
@@ -177,7 +221,9 @@ fun SettingDivideItem(
     when(mainText) {
         "문의하기" -> {
             Column (
-                modifier = Modifier.clickable { onClickItem() }.padding(top = 10.dp)
+                modifier = Modifier
+                    .clickable { onClickItem() }
+                    .padding(top = 10.dp)
             ) {
                 Text(
                     text = mainText,
@@ -194,7 +240,9 @@ fun SettingDivideItem(
                 )
 
                 HorizontalDivider(
-                    modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 10.dp),
                     thickness = 2.dp,
                     color = Color.Gray.copy(0.5f)
                 )
@@ -203,7 +251,9 @@ fun SettingDivideItem(
 
         else -> {
             Column (
-                modifier = Modifier.clickable { onClickItem() }.padding(top = 10.dp)
+                modifier = Modifier
+                    .clickable { onClickItem() }
+                    .padding(top = 10.dp)
             ) {
                 Text(
                     text = mainText,
@@ -220,7 +270,9 @@ fun SettingDivideItem(
                 )
 
                 HorizontalDivider(
-                    modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 10.dp),
                     thickness = 2.dp,
                     color = Color.Black.copy(0.5f)
                 )
