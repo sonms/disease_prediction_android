@@ -82,6 +82,7 @@ import com.example.diseasepredictionappproject.utils.AlarmHelper
 import com.example.diseasepredictionappproject.utils.FontSize
 import com.example.diseasepredictionappproject.utils.FontUtils
 import com.example.diseasepredictionappproject.utils.PreferenceDataStore
+import com.example.diseasepredictionappproject.utils.RequestCodeManager
 import com.example.diseasepredictionappproject.view_model.MedicineViewModel
 import com.example.diseasepredictionappproject.view_model.PredictionViewModel
 import java.text.SimpleDateFormat
@@ -154,7 +155,9 @@ fun EditScreen(
 
     val calendar = Calendar.getInstance()
     var selectedDay by remember { mutableStateOf(calendar.get(Calendar.DAY_OF_WEEK)) }
-    val requestCode = 1001
+
+    //알람 requestCode 설정
+    val uniqueRequestCode = RequestCodeManager(context).getRequestCode()
 
     var isOpenCalendar by remember {
         mutableStateOf(false)
@@ -398,7 +401,9 @@ fun EditScreen(
 
                     Log.e("editSelectedTime", editSelectedTime)
 
-                    alarmHelper.scheduleWeeklyAlarm(selectedDay, editSelectedTime.split(":").first().trim().toInt(), editSelectedTime.split(":").last().trim().toInt(), requestCode, "알람", message)
+                    alarmHelper.scheduleWeeklyAlarm(selectedDay, editSelectedTime.split(":").first().trim().toInt(), editSelectedTime.split(":").last().trim().toInt(), uniqueRequestCode, "알람", message)
+
+                    RequestCodeManager(context).getNextRequestCode()
 
                     val targetRoute = when (editType) {
                         "Home" -> MainActivity.BottomNavItem.Home.screenRoute

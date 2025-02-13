@@ -36,7 +36,7 @@ class NotificationHelper(private val context: Context) {
 
     fun showNotification(title: String, message: String) {
         if (ActivityCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-            Log.w(TAG, "⚠️ 알림 권한 없음 - 알림 표시 불가")
+            Log.w(TAG, "알림 권한 없음 - 알림 표시 불가")
             return
         }
 

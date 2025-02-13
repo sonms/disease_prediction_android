@@ -61,9 +61,7 @@ fun SettingsScreen(
 
 
     //알림
-    var isAlarmCheck by remember {
-        mutableStateOf(false)
-    }
+    val isAlarmCheck by PreferenceDataStore.getAlarmFlow(context).collectAsState(initial = false)
 
 
 
@@ -92,7 +90,9 @@ fun SettingsScreen(
                 Switch(
                     checked = isAlarmCheck,
                     onCheckedChange = {
-                        isAlarmCheck = it
+                        CoroutineScope(Dispatchers.IO).launch {
+                            PreferenceDataStore.setAlarmEnabled(context, it)
+                        }
                     },
                     colors = SwitchDefaults.colors (
                         checkedTrackColor = blueColor4,
@@ -103,7 +103,6 @@ fun SettingsScreen(
                     )
                 )
             }
-
         }
 
         item {
