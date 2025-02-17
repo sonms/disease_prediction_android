@@ -1,5 +1,6 @@
 package com.example.diseasepredictionappproject.view.bottom_navigation.saved
 
+import android.content.Intent
 import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,7 +19,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -34,10 +35,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.diseasepredictionappproject.BuildConfig
@@ -45,7 +47,6 @@ import com.example.diseasepredictionappproject.data.DrugInfoRequest
 import com.example.diseasepredictionappproject.data.Item
 import com.example.diseasepredictionappproject.loading.LoadingState
 import com.example.diseasepredictionappproject.room_db.PredictionEntity
-import com.example.diseasepredictionappproject.room_db.medicine.MedicineEntity
 import com.example.diseasepredictionappproject.ui.theme.Pink100
 import com.example.diseasepredictionappproject.ui.theme.blueColor4
 import com.example.diseasepredictionappproject.utils.FontSize
@@ -56,7 +57,6 @@ import com.example.diseasepredictionappproject.view_model.OpenApiViewModel
 import com.example.diseasepredictionappproject.view_model.PredictionViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
@@ -69,6 +69,7 @@ fun DetailScreen(
     medicineViewModel: MedicineViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
+    val clipboardManager = LocalClipboardManager.current
     val fontSize by PreferenceDataStore.getFontSizeFlow(context).collectAsState(initial = FontSize.Medium)
 
     LaunchedEffect(id) {
@@ -87,6 +88,8 @@ fun DetailScreen(
     var clickData by remember {
         mutableStateOf<DrugInfoRequest?>(null)
     }
+
+
 
     LaunchedEffect(isStartRecommendMedicine) {
         clickData?.let {
@@ -153,15 +156,50 @@ fun DetailScreen(
                     Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "backScreen")
                 }
             }
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            IconButton(onClick = {
+                if (type == "disease") {
+                    clipboardManager.setText(AnnotatedString("질병 이름 : ${selectData?.diseaseName} / 선택 증상 : ${selectData?.diseaseContent}"))
+
+                    val sendIntent = Intent().apply {
+                        action = Intent.ACTION_SEND
+                        putExtra(Intent.EXTRA_TEXT, clipboardManager.getText())
+                        this.type = "text/plain"
+                    }
+                    val shareIntent = Intent.createChooser(sendIntent, "공유하기")
+                    context.startActivity(shareIntent)
+                } else {
+                    clipboardManager.setText(AnnotatedString("약 이름 : ${movedMedicineData?.itemName} / 효능 : ${movedMedicineData?.efcyQesitm}"))
+
+                    val sendIntent = Intent().apply {
+                        action = Intent.ACTION_SEND
+                        putExtra(Intent.EXTRA_TEXT, clipboardManager.getText())
+                        this.type = "text/plain"
+                    }
+                    val shareIntent = Intent.createChooser(sendIntent, "공유하기")
+                    context.startActivity(shareIntent)
+                }
+            }) {
+                Column(
+                    modifier = Modifier
+                        .padding(5.dp)
+                        .wrapContentSize()
+                        .align(Alignment.Top),
+                    horizontalAlignment = Alignment.Start
+                ) {
+                    Icon(Icons.Default.Share, contentDescription = "share content")
+                }
+            }
         }
 
 
         if (type == "disease") {
             DetailItem(
-                selectData,
-                fontSize,
+                item = selectData,
+                fontSize = fontSize,
                 onSearchMedicine = {
-                    {
                         isStartRecommendMedicine = !isStartRecommendMedicine
 
                         val requestData = DrugInfoRequest (
@@ -187,7 +225,6 @@ fun DetailScreen(
                         )
 
                         clickData = requestData
-                    }
                 },
                 onEditData = {
                     navController.navigate("edit?type=edit&data=prediction&id=${it.id}")
@@ -340,7 +377,9 @@ fun DetailMedicineItem(
                 text = "효능: ${item?.efcyQesitm.orEmpty()}",
                 style = FontUtils.getTextStyle(fontSize.size),
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.align(Alignment.CenterHorizontally).weight(1f)
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .weight(1f)
             )
             Spacer(modifier = Modifier.height(10.dp))
         } else {
