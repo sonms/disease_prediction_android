@@ -61,6 +61,12 @@ object PreferenceDataStore {
         }
     }
 
+    suspend fun deleteAllSearchQuery(context: Context) {
+        context.dataStore2.edit { prefs ->
+            prefs[searchKey] = ""
+        }
+    }
+
 
     fun getSearchQueries(context: Context): Flow<List<String>> {
         return context.dataStore2.data.map { prefs ->

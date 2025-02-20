@@ -53,9 +53,7 @@ fun SettingsScreen(
 
     //다크모드
 
-    //문의 및 설문조사?
-
-    //글자 크기 조정?
+    //글자 크기 조정
     val context = LocalContext.current
     val fontSize by PreferenceDataStore.getFontSizeFlow(context).collectAsState(initial = FontSize.Medium)
 
