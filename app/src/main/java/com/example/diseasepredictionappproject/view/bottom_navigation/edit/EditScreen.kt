@@ -61,6 +61,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -73,9 +74,8 @@ import androidx.navigation.NavController
 import com.example.diseasepredictionappproject.MainActivity
 import com.example.diseasepredictionappproject.R
 import com.example.diseasepredictionappproject.loading.LoadingState
+import com.example.diseasepredictionappproject.room_db.alarm.AlarmEntity
 import com.example.diseasepredictionappproject.room_db.medicine.MedicineEntity
-import com.example.diseasepredictionappproject.ui.theme.blueColor2
-import com.example.diseasepredictionappproject.ui.theme.blueColor3
 import com.example.diseasepredictionappproject.ui.theme.blueColor4
 import com.example.diseasepredictionappproject.ui.theme.blueColor6
 import com.example.diseasepredictionappproject.utils.AlarmHelper
@@ -83,6 +83,7 @@ import com.example.diseasepredictionappproject.utils.FontSize
 import com.example.diseasepredictionappproject.utils.FontUtils
 import com.example.diseasepredictionappproject.utils.PreferenceDataStore
 import com.example.diseasepredictionappproject.utils.RequestCodeManager
+import com.example.diseasepredictionappproject.view_model.AlarmViewModel
 import com.example.diseasepredictionappproject.view_model.MedicineViewModel
 import com.example.diseasepredictionappproject.view_model.PredictionViewModel
 import java.text.SimpleDateFormat
@@ -142,11 +143,13 @@ fun EditScreen(
     data : String, //medicine, prediction
     id : String,
     predictionViewModel: PredictionViewModel = hiltViewModel(),
-    medicineViewModel: MedicineViewModel = hiltViewModel()
+    medicineViewModel: MedicineViewModel = hiltViewModel(),
+    alarmViewModel: AlarmViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
     val editPredictionData by predictionViewModel.selectedSavedItem.collectAsState()
     val editMedicineData by medicineViewModel.selectedSavedItem.collectAsState()
+    val editAlarmData by alarmViewModel.alarmData.collectAsState()
 
     val fontSize by PreferenceDataStore.getFontSizeFlow(context).collectAsState(initial = FontSize.Medium)
 
@@ -154,11 +157,12 @@ fun EditScreen(
     val alarmHelper = remember { AlarmHelper(context) }
 
     val calendar = Calendar.getInstance()
-    var selectedDay by remember { mutableStateOf(calendar.get(Calendar.DAY_OF_WEEK)) }
+    var selectedDay by remember { mutableStateOf(-1) }
 
     //알람 requestCode 설정
     val uniqueRequestCode = RequestCodeManager(context).getRequestCode()
 
+    //UI 열림 및 확인
     var isOpenCalendar by remember {
         mutableStateOf(false)
     }
@@ -167,11 +171,24 @@ fun EditScreen(
         mutableStateOf(false)
     }
 
+    var isSetAlarm by remember {
+        if (editAlarmData == null) {
+            mutableStateOf(false)
+        } else {
+            mutableStateOf(true)
+        }
+    }
+
+    //에러 제어
     var isError by remember {
         mutableStateOf(false)
     }
 
     var isTypeError by remember {
+        mutableStateOf(false)
+    }
+
+    var isTimeError by remember {
         mutableStateOf(false)
     }
 
@@ -300,6 +317,12 @@ fun EditScreen(
 
 
 
+    LaunchedEffect(editPredictionData, editMedicineData) {
+        val alarmId = editPredictionData?.id ?: editMedicineData?.id
+        if (alarmId != null) {
+            alarmViewModel.fetchAlarmData(alarmId)
+        }
+    }
 
 
     Column (
@@ -324,7 +347,56 @@ fun EditScreen(
             Spacer(modifier = Modifier.weight(1f))
 
             IconButton(onClick = {
+                Log.e("AlarmSSSS", isSetAlarm.toString())
+                Log.e("AlarmSSSS", isTimeError.toString())
                 if (editType.isNotEmpty() && editTitle.isNotEmpty()) {
+
+                    val message = alarmContent.ifEmpty {
+                        editTitle
+                    }
+
+                    // isSetAlarm이 true인 경우 editSelectedTime이 비어있으면 오류 처리
+                    if (isSetAlarm) {
+                        if (editSelectedTime.isEmpty()) {
+                            isTimeError = true
+                            Log.e("Time Error", "editSelectedTime is empty")
+                        } else {
+                            // 알람 설정
+                            Log.e("editSelectedTime", editSelectedTime)
+
+
+                            if (selectedDay == -1) {
+                                val year = calendar.get(Calendar.YEAR) // 현재 연도
+                                val month = calendar.get(Calendar.MONTH) + 1 // 현재 월 (0부터 시작하므로 +1)
+                                val day = calendar.get(Calendar.DAY_OF_MONTH) // 현재 일
+                                Log.e("editSelectedTime", "$year $month $day")
+                                alarmHelper.scheduleAlarmForDate(
+                                    year,
+                                    month,
+                                    day,
+                                    editSelectedTime.split(":").first().trim().toInt(),
+                                    editSelectedTime.split(":").last().trim().toInt(),
+                                    uniqueRequestCode,
+                                    "알람",
+                                    message
+                                )
+                            } else {
+                                alarmHelper.scheduleWeeklyAlarm(
+                                    selectedDay,
+                                    editSelectedTime.split(":").first().trim().toInt(),
+                                    editSelectedTime.split(":").last().trim().toInt(),
+                                    uniqueRequestCode,
+                                    "알람",
+                                    message
+                                )
+                            }
+                            isTimeError = false
+                        }
+                    } else {
+                        isTimeError = false
+                    }
+
+                    // editType이 "Prediction"인 경우
                     if (editType == "Prediction") {
                         when (type) {
                             "add" -> {
@@ -334,6 +406,17 @@ fun EditScreen(
                                     false,
                                     ""
                                 )
+
+                                // 알람 추가
+                                if (isSetAlarm && editSelectedTime.isNotEmpty()) {
+                                    alarmViewModel.addAlarmData(
+                                        AlarmEntity(
+                                            alarmSetId = uniqueRequestCode.toLong(),
+                                            alarmTime = "$selectedDay $editSelectedTime",
+                                            alarmContent = message
+                                        )
+                                    )
+                                }
                             }
 
                             "edit" -> {
@@ -344,6 +427,17 @@ fun EditScreen(
                                     createDate = editPredictionData?.createDate,
                                     isBookMark = editPredictionData?.isBookMark,
                                     recommendMedication = editPredictionData?.recommendMedication
+                                )
+
+                                alarmViewModel.updateAlarmData(
+                                    editAlarmData?.alarmSetId?.let {
+                                        AlarmEntity(
+                                            id = editAlarmData?.id!!,
+                                            alarmSetId = it,
+                                            alarmTime = "$selectedDay $editSelectedTime",
+                                            alarmContent = message
+                                        )
+                                    }
                                 )
                             }
                         }
@@ -369,6 +463,17 @@ fun EditScreen(
                                         isBookMark = false
                                     )
                                 )
+
+                                // 알람 추가
+                                if (isSetAlarm && editSelectedTime.isNotEmpty()) {
+                                    alarmViewModel.addAlarmData(
+                                        AlarmEntity(
+                                            alarmSetId = uniqueRequestCode.toLong(),
+                                            alarmTime = "$selectedDay $editSelectedTime",
+                                            alarmContent = message
+                                        )
+                                    )
+                                }
                             }
 
                             "edit" -> {
@@ -391,31 +496,39 @@ fun EditScreen(
                                         isBookMark = editMedicineData?.isBookMark
                                     )
                                 )
+
+                                alarmViewModel.updateAlarmData(
+                                    editAlarmData?.alarmSetId?.let {
+                                        AlarmEntity(
+                                            id = editAlarmData?.id!!,
+                                            alarmSetId = it,
+                                            alarmTime = "$selectedDay $editSelectedTime",
+                                            alarmContent = message
+                                        )
+                                    }
+                                )
                             }
                         }
                     }
 
-                    val message = alarmContent.ifEmpty {
-                        editTitle
-                    }
-
-                    Log.e("editSelectedTime", editSelectedTime)
-
-                    alarmHelper.scheduleWeeklyAlarm(selectedDay, editSelectedTime.split(":").first().trim().toInt(), editSelectedTime.split(":").last().trim().toInt(), uniqueRequestCode, "알람", message)
-
+                    // RequestCodeManager를 호출하여 다음 요청 코드 가져오기
                     RequestCodeManager(context).getNextRequestCode()
 
-                    val targetRoute = when (editType) {
-                        "Home" -> MainActivity.BottomNavItem.Home.screenRoute
-                        "Saved" -> MainActivity.BottomNavItem.Saved.screenRoute
-                        else -> MainActivity.BottomNavItem.Home.screenRoute
-                    }
+                    // 화면 이동은 isTimeError가 false일 때만 수행
+                    if (!isTimeError) {
+                        val targetRoute = when (editType) {
+                            "Home" -> MainActivity.BottomNavItem.Home.screenRoute
+                            "Saved" -> MainActivity.BottomNavItem.Saved.screenRoute
+                            else -> MainActivity.BottomNavItem.Home.screenRoute
+                        }
 
-                    navController?.navigate(targetRoute) {
-                        popUpTo(targetRoute) { inclusive = true }
-                        launchSingleTop = true
+                        navController?.navigate(targetRoute) {
+                            popUpTo(targetRoute) { inclusive = true }
+                            launchSingleTop = true
+                        }
                     }
                 } else {
+                    // 오류 상태 업데이트
                     if (editTitle.isEmpty()) {
                         isError = true
                     }
@@ -423,15 +536,10 @@ fun EditScreen(
                     if (editType.isEmpty()) {
                         isTypeError = true
                     }
-                    /*when {
-                        editTitle.isEmpty() -> {
-                            isError = true
-                        }
 
-                        editType.isEmpty() -> {
-                            isTypeError = true
-                        }
-                    }*/
+                    if (editSelectedTime.isEmpty()) {
+                        isTimeError = true
+                    }
                 }
             }) {
                 Icon(Icons.Default.Check, contentDescription = "edit complete")
@@ -475,12 +583,17 @@ fun EditScreen(
 
             item {
                 EditSchedule(
+                    isSetAlarm,
+                    isTimeError,
                     fontSize,
                     editSelectedDate,
                     editSelectedTime,
                     alarmContent,
                     onCalendarClick = {
                         isOpenCalendar = it
+                    },
+                    onSetAlarm =  {
+                        isSetAlarm = it
                     },
                     onClickDay = {
                         if (it != "") {
@@ -665,7 +778,7 @@ fun EditType (
 
         if (isError) {
             Text(
-                modifier = Modifier.padding(start = 10.dp, bottom = 10.dp),
+                modifier = Modifier.padding(start = 20.dp, bottom = 10.dp),
                 text = "유형을 선택해주세요.",
                 style = FontUtils.getTextStyle(fontSize.size),
                 color = MaterialTheme.colorScheme.error
@@ -700,7 +813,7 @@ fun EditContent(
             .fillMaxWidth()
             .heightIn(min = 50.dp, max = 200.dp) // 최대 높이 제한
             .verticalScroll(rememberScrollState()) // 내용이 넘칠 때 스크롤 가능
-            .padding(10.dp),
+            .padding(top = 20.dp, start = 10.dp, end = 10.dp),
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = blueColor6
         ),
@@ -715,7 +828,6 @@ fun EditContent(
                 text = typeContentText,
                 fontWeight = FontWeight.Bold,
                 style = FontUtils.getTextStyle(fontSize.size),
-                color = Color.Black.copy(alpha = 0.5f)
             )
         }
     )
@@ -723,17 +835,20 @@ fun EditContent(
 
 @Composable
 fun EditSchedule(
+    initStatus : Boolean,
+    isError: Boolean,
     fontSize: FontSize,
     selectedDate : String,
     selectedTime : String,
     alarmContent : String,
+    onSetAlarm : (Boolean) -> Unit,
     onCalendarClick: (Boolean) -> Unit,
     onClickDay : (String) -> Unit,
     onClickTime : (Boolean) -> Unit,
     onTextChange: (String) -> Unit
 ) {
     var isOpenAlarm by remember {
-        mutableStateOf(false)
+        mutableStateOf(initStatus)
     }
 
     var alarmMessage by remember {
@@ -744,6 +859,7 @@ fun EditSchedule(
     var selectDay by remember {
         mutableStateOf("")
     }
+    val keyboardController = LocalSoftwareKeyboardController.current
     Row (
         modifier = Modifier
             .fillMaxWidth()
@@ -760,6 +876,8 @@ fun EditSchedule(
             checked = isOpenAlarm,
             onCheckedChange = {
                 isOpenAlarm = it
+                onSetAlarm(it)
+                keyboardController?.hide()
             },
             colors = SwitchDefaults.colors (
                 checkedTrackColor = blueColor4,
@@ -809,7 +927,7 @@ fun EditSchedule(
                     val textColor = when (i) {
                         "일" -> Color.Red
                         "토" -> Color.Blue
-                        else -> Color.Black
+                        else -> MaterialTheme.colorScheme.onPrimary
                     }
 
                     Text(
@@ -834,8 +952,11 @@ fun EditSchedule(
                                 }
                             }
                             .background(
-                                if (selectDay == i) {
+                                if (selectDay == i && !selectedDate.contains("-")) {
                                     blueColor4
+                                } else if (selectedDate.contains("-")) {
+                                    selectDay = "-1"
+                                    Color.Transparent
                                 } else {
                                     Color.Transparent
                                 }, RoundedCornerShape(8.dp)
@@ -856,6 +977,15 @@ fun EditSchedule(
                     Text(text = "선택 시간 : $selectedTime", style = FontUtils.getTextStyle(fontSize.size) , fontWeight = FontWeight.Bold)
                 } else {
                     Text(text = "시간 설정", style = FontUtils.getTextStyle(fontSize.size) , fontWeight = FontWeight.Bold)
+                }
+
+                if (isError) {
+                    Text(
+                        modifier = Modifier.padding(start = 20.dp, bottom = 10.dp),
+                        text = "시간을 설정해주세요.",
+                        style = FontUtils.getTextStyle(fontSize.size),
+                        color = MaterialTheme.colorScheme.error
+                    )
                 }
 
                 Spacer(modifier = Modifier.weight(1f))
@@ -906,13 +1036,23 @@ fun EditCalendar(
 
             },
             colors = DatePickerDefaults.colors(
-                containerColor = Color.White,
+                /*containerColor = Color.White,
                 weekdayContentColor = Color.Black,
                 titleContentColor = Color.Black,
                 disabledDayContentColor = blueColor2,
                 dayContentColor = Color.Black,
                 todayDateBorderColor = blueColor4,
-                selectedDayContainerColor = blueColor3
+                selectedDayContainerColor = blueColor3*/
+                titleContentColor = Color.Red, // 다이얼로그 제목 텍스트 색상
+                headlineContentColor = Color.Blue, // 선택된 날짜(헤드라인) 색상
+                weekdayContentColor = Color.Green, // 요일(월, 화, 수 등) 텍스트 색상
+                subheadContentColor = Color.Magenta, // 서브헤드 텍스트 색상
+                navigationContentColor = Color.Cyan, // 이전/다음 버튼 텍스트 색상
+                yearContentColor = Color.Gray, // 연도 선택 리스트의 일반 연도 색상
+                selectedYearContentColor = Color.Yellow, // 선택된 연도의 텍스트 색상
+                dayContentColor = Color.Black, // 날짜 기본 텍스트 색상
+                selectedDayContentColor = Color.White, // 선택된 날짜 텍스트 색상
+                todayContentColor = Color.Red // 오늘 날짜 텍스트 색상
             ),
             shape = RoundedCornerShape(6.dp)
         ) {

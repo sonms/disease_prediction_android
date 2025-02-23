@@ -2,10 +2,24 @@ package com.example.diseasepredictionappproject.room_db.medicine
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
+import androidx.room.ForeignKey
+import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.example.diseasepredictionappproject.room_db.alarm.AlarmEntity
 import com.google.gson.annotations.SerializedName
 
-@Entity(tableName = "MedicineTable")
+@Entity(
+    tableName = "MedicineTable",
+    foreignKeys = [
+        ForeignKey(
+            entity = AlarmEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["alarmId"],
+            onDelete = ForeignKey.CASCADE // 알람이 삭제되면 관련 약 정보도 삭제됨
+        )
+    ],
+    indices = [Index(value = ["alarmId"])]
+)
 data class MedicineEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0L,
@@ -24,5 +38,8 @@ data class MedicineEntity(
     @SerializedName("openDe") val openDe: String?, // 공개일자
     @SerializedName("updateDe") val updateDe: String?, // 수정일자
     @SerializedName("itemImage") val itemImage: String?, // 낱알 이미지 (null일 경우가 있음)
-    @SerializedName("bizrno") val bizrno: String? // 사업자번호
+    @SerializedName("bizrno") val bizrno: String?, // 사업자번호
+
+    @ColumnInfo
+    val alarmId: Long? = null // 연결된 알람 ID (없을 수도 있음)
 )

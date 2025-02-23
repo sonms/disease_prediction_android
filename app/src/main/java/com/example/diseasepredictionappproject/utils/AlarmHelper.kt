@@ -15,7 +15,7 @@ class AlarmHelper(private val context: Context) {
     private val TAG = "AlarmHelper"
     private val prefs = context.getSharedPreferences("alarm_prefs", Context.MODE_PRIVATE)
 
-    fun scheduleAlarm(dateTime: Calendar, requestCode: Int, title: String, message: String) {
+    private fun scheduleAlarm(dateTime: Calendar, requestCode: Int, title: String, message: String) {
         if (!canScheduleExactAlarms()) {
             requestExactAlarmPermission()
             return
@@ -40,18 +40,39 @@ class AlarmHelper(private val context: Context) {
         }
     }
 
-    fun scheduleWeeklyAlarm(dayOfWeek: Int, hour: Int, minute: Int, requestCode: Int, title: String, message: String) {
+    // 특정 날짜와 시간으로 알람 설정
+    fun scheduleAlarmForDate(year: Int, month: Int, day: Int, hour: Int, minute: Int, requestCode: Int, title: String, message: String) {
         val calendar = Calendar.getInstance().apply {
-            set(Calendar.DAY_OF_WEEK, dayOfWeek+1)
+            set(Calendar.YEAR, year)
+            set(Calendar.MONTH, month - 1) // month에 1을 빼줌으로써 올바른 월 설정
+            set(Calendar.DAY_OF_MONTH, day)
             set(Calendar.HOUR_OF_DAY, hour)
             set(Calendar.MINUTE, minute)
             set(Calendar.SECOND, 0)
 
+            // 만약 설정된 시간이 현재 시간보다 이전이라면, 다음 날로 설정
+            if (timeInMillis <= System.currentTimeMillis()) {
+                add(Calendar.DAY_OF_YEAR, 1)
+            }
+        }
+        Log.d(TAG, " 특정 날짜 알람 설정: 날짜 $year-${month - 1}-$day, 시간 $hour:$minute")
+        scheduleAlarm(calendar, requestCode, title, message)
+    }
+
+    fun scheduleWeeklyAlarm(dayOfWeek: Int, hour: Int, minute: Int, requestCode: Int, title: String, message: String) {
+        val calendar = Calendar.getInstance().apply {
+            // dayOfWeek는 1~7의 값이므로, 주의: +1 하지 않음
+            set(Calendar.DAY_OF_WEEK, dayOfWeek)
+            set(Calendar.HOUR_OF_DAY, hour)
+            set(Calendar.MINUTE, minute)
+            set(Calendar.SECOND, 0)
+
+            // 만약 설정된 시간이 현재 시간보다 이전이라면, 다음 주로 설정
             if (timeInMillis <= System.currentTimeMillis()) {
                 add(Calendar.WEEK_OF_YEAR, 1)
             }
         }
-        Log.d(TAG, " 주간 알람 설정: 요일 ${dayOfWeek+1}, 시간 $hour:$minute")
+        Log.d(TAG, " 주간 알람 설정: 요일 ${dayOfWeek}, 시간 $hour:$minute")
         scheduleAlarm(calendar, requestCode, title, message)
     }
 

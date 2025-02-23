@@ -6,16 +6,18 @@ import androidx.annotation.RequiresApi
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import androidx.room.migration.Migration
-import androidx.sqlite.db.SupportSQLiteDatabase
+import com.example.diseasepredictionappproject.room_db.alarm.AlarmDao
+import com.example.diseasepredictionappproject.room_db.alarm.AlarmEntity
 import com.example.diseasepredictionappproject.room_db.medicine.MedicineDao
 import com.example.diseasepredictionappproject.room_db.medicine.MedicineEntity
 
 @RequiresApi(Build.VERSION_CODES.O)
-@Database(entities = [PredictionEntity::class, MedicineEntity::class], version = 2, exportSchema = false)
+@Database(entities = [PredictionEntity::class, MedicineEntity::class, AlarmEntity::class], version = 3, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun getPredictionDao(): PredictionDao
     abstract fun getMedicineDao(): MedicineDao
+
+    abstract fun getAlarmDao() : AlarmDao
 
     companion object {
         @Volatile
@@ -27,8 +29,8 @@ abstract class AppDatabase : RoomDatabase() {
                 AppDatabase::class.java,
                 "disease-prediction-database"
             )
-                //.fallbackToDestructiveMigration()
-                //.addMigrations(migration_1_2) // 마이그레이션 추가
+                .fallbackToDestructiveMigration()
+                //.addMigrations(migration_2_3) // 마이그레이션 추가
                 .build()
 
         fun getInstance(context: Context): AppDatabase =
@@ -37,13 +39,12 @@ abstract class AppDatabase : RoomDatabase() {
             }
 
 
-        val migration_1_2 = object : Migration(1, 2) {
+        /*val migration_2_3 = object : Migration(2, 3) {
             override fun migrate(db: SupportSQLiteDatabase) {
-                // isBookMark 컬럼 추가: BOOLEAN 타입으로 기본값 0(즉, false)
-                db.execSQL(
-                    "ALTER TABLE MedicineTable ADD COLUMN isBookMark INTEGER NOT NULL DEFAULT 0"
-                )
+                // PredictionTable에 alarmId 컬럼 추가: INTEGER 타입으로 기본값 NULL
+                db.execSQL("ALTER TABLE PredictionTable ADD COLUMN alarmId INTEGER")
+                db.execSQL("ALTER TABLE MedicineTable ADD COLUMN alarmId INTEGER")
             }
-        }
+        }*/
     }
 }

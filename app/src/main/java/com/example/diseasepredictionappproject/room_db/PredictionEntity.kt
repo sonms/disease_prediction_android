@@ -7,21 +7,24 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
-import com.example.diseasepredictionappproject.room_db.medicine.MedicineEntity
+import com.example.diseasepredictionappproject.room_db.alarm.AlarmEntity
 import java.time.LocalDateTime
 
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Entity(
     tableName = "PredictionTable",
-    /*foreignKeys = [ForeignKey(
-        entity = MedicineEntity::class,
-        parentColumns = ["id"],
-        childColumns = ["medicineId"],
-        onDelete = ForeignKey.SET_NULL // Category가 삭제되면 관련 FinancialEntity의 카테고리를 NULL로 설정
-    )],
-    indices = [Index(value = ["id"])] // 성능 향상을 위한 인덱스 추가*/
+    foreignKeys = [
+        ForeignKey(
+            entity = AlarmEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["alarmId"],
+            onDelete = ForeignKey.SET_NULL // 알람이 삭제되면 관련 데이터의 alarmId를 NULL로 설정
+        )
+    ],
+    indices = [Index(value = ["alarmId"])] // 검색 속도 향상을 위한 인덱스 추가
 )
+
 data class PredictionEntity (
     @PrimaryKey(autoGenerate = true)
     val id : Long = 0L,
@@ -34,5 +37,7 @@ data class PredictionEntity (
     @ColumnInfo
     var isBookMark : Boolean?, //북마크 여부
     @ColumnInfo
-    var recommendMedication : String? //추천 약
+    var recommendMedication : String?, //추천 약
+    @ColumnInfo
+    val alarmId: Long? = null // 연결된 알람 ID (없을 수도 있음)
 )

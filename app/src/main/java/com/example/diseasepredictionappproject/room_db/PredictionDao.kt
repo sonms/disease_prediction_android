@@ -4,7 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
-import com.example.diseasepredictionappproject.data.Item
+import com.example.diseasepredictionappproject.room_db.alarm.AlarmEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -37,6 +37,12 @@ interface PredictionDao {
     )
     fun searchPredictionByTitleOrContent(searchText: String): Flow<List<PredictionEntity>>
 
+    //선택한 데이터의 Id의 알람 데이터 가져오기
+    @Query("""
+    SELECT * FROM AlarmTable 
+    WHERE id = (SELECT alarmId FROM PredictionTable WHERE id = :predictionId)
+""")
+    suspend fun getPredictionOfAlarm(predictionId: Long) : AlarmEntity
 
     //예측 데이터 insert, delete, update
     @Insert

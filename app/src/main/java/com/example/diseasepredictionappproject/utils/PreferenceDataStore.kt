@@ -78,7 +78,7 @@ object PreferenceDataStore {
     //알람 설정 Flow
     fun getAlarmFlow(context: Context): Flow<Boolean> = context.dataStore.data
         .map { preferences ->
-            preferences[ALARM_SETTING_KEY] ?: false // 기본 값: false (알람 OFF)
+            preferences[ALARM_SETTING_KEY] ?: true // 기본 값: true (알람 ON)
         }
 
     //알람 설정 저장
