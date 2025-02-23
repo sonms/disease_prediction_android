@@ -102,7 +102,7 @@ class PredictionViewModel @Inject constructor(
 
 
     @RequiresApi(Build.VERSION_CODES.O)
-    fun addPredictionData(diseaseName : String, diseaseContent : String, isBookMark : Boolean, recommendMedication : String) {
+    fun addPredictionData(diseaseName : String, diseaseContent : String, isBookMark : Boolean, recommendMedication : String, alarmId : Long?) {
         /*
         var diseaseName : String?, //저장된 거 이름
         @ColumnInfo
@@ -120,7 +120,8 @@ class PredictionViewModel @Inject constructor(
                 diseaseName = diseaseName,
                 diseaseContent = diseaseContent,
                 isBookMark = isBookMark,
-                recommendMedication = recommendMedication
+                recommendMedication = recommendMedication,
+                alarmId = alarmId
             )
             repository.insertPredictionData(newData)
         }

@@ -2,15 +2,12 @@ package com.example.diseasepredictionappproject.room_db.medicine
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
-import androidx.room.ForeignKey
-import androidx.room.Index
 import androidx.room.PrimaryKey
-import com.example.diseasepredictionappproject.room_db.alarm.AlarmEntity
 import com.google.gson.annotations.SerializedName
 
 @Entity(
     tableName = "MedicineTable",
-    foreignKeys = [
+    /*foreignKeys = [
         ForeignKey(
             entity = AlarmEntity::class,
             parentColumns = ["id"],
@@ -18,7 +15,7 @@ import com.google.gson.annotations.SerializedName
             onDelete = ForeignKey.CASCADE // 알람이 삭제되면 관련 약 정보도 삭제됨
         )
     ],
-    indices = [Index(value = ["alarmId"])]
+    indices = [Index(value = ["alarmId"])]*/
 )
 data class MedicineEntity(
     @PrimaryKey(autoGenerate = true)

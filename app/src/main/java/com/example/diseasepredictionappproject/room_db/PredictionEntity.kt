@@ -4,17 +4,14 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.room.ColumnInfo
 import androidx.room.Entity
-import androidx.room.ForeignKey
-import androidx.room.Index
 import androidx.room.PrimaryKey
-import com.example.diseasepredictionappproject.room_db.alarm.AlarmEntity
 import java.time.LocalDateTime
 
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Entity(
     tableName = "PredictionTable",
-    foreignKeys = [
+   /* foreignKeys = [
         ForeignKey(
             entity = AlarmEntity::class,
             parentColumns = ["id"],
@@ -22,7 +19,7 @@ import java.time.LocalDateTime
             onDelete = ForeignKey.SET_NULL // 알람이 삭제되면 관련 데이터의 alarmId를 NULL로 설정
         )
     ],
-    indices = [Index(value = ["alarmId"])] // 검색 속도 향상을 위한 인덱스 추가
+    indices = [Index(value = ["alarmId"])] // 검색 속도 향상을 위한 인덱스 추가*/
 )
 
 data class PredictionEntity (

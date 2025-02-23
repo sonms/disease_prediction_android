@@ -40,6 +40,37 @@ class AlarmHelper(private val context: Context) {
         }
     }
 
+    private fun scheduleRepeatingAlarm(dateTime: Calendar, requestCode: Int, title: String, message: String) {
+        if (!canScheduleExactAlarms()) {
+            requestExactAlarmPermission()
+            return
+        }
+
+        val intent = Intent(context, AlarmReceiver::class.java).apply {
+            putExtra("title", title)
+            putExtra("message", message)
+        }
+
+        val pendingIntent = PendingIntent.getBroadcast(
+            context, requestCode, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        try {
+            alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, dateTime.timeInMillis, pendingIntent)
+
+            val nextAlarmTime = dateTime.clone() as Calendar
+            nextAlarmTime.add(Calendar.WEEK_OF_YEAR, 1)
+
+            alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, nextAlarmTime.timeInMillis, pendingIntent)
+
+            saveAlarm(requestCode)
+            Log.d(TAG, "반복 알람 설정 완료: ${dateTime.time}, RequestCode: $requestCode")
+        } catch (e: SecurityException) {
+            Log.e(TAG, "반복 알람 설정 실패: SecurityException 발생", e)
+            requestExactAlarmPermission()
+        }
+    }
+
     // 특정 날짜와 시간으로 알람 설정
     fun scheduleAlarmForDate(year: Int, month: Int, day: Int, hour: Int, minute: Int, requestCode: Int, title: String, message: String) {
         val calendar = Calendar.getInstance().apply {
@@ -61,8 +92,7 @@ class AlarmHelper(private val context: Context) {
 
     fun scheduleWeeklyAlarm(dayOfWeek: Int, hour: Int, minute: Int, requestCode: Int, title: String, message: String) {
         val calendar = Calendar.getInstance().apply {
-            // dayOfWeek는 1~7의 값이므로, 주의: +1 하지 않음
-            set(Calendar.DAY_OF_WEEK, dayOfWeek)
+            set(Calendar.DAY_OF_WEEK, dayOfWeek+1)
             set(Calendar.HOUR_OF_DAY, hour)
             set(Calendar.MINUTE, minute)
             set(Calendar.SECOND, 0)
@@ -72,8 +102,9 @@ class AlarmHelper(private val context: Context) {
                 add(Calendar.WEEK_OF_YEAR, 1)
             }
         }
-        Log.d(TAG, " 주간 알람 설정: 요일 ${dayOfWeek}, 시간 $hour:$minute")
-        scheduleAlarm(calendar, requestCode, title, message)
+        Log.d(TAG, " 주간 알람 설정: 요일 ${dayOfWeek+1}, 시간 $hour:$minute")
+        //scheduleAlarm(calendar, requestCode, title, message)
+        scheduleRepeatingAlarm(calendar, requestCode, title, message)
     }
 
     fun cancelAlarm(requestCode: Int) {
@@ -104,7 +135,7 @@ class AlarmHelper(private val context: Context) {
         }
     }
 
-    private fun requestExactAlarmPermission() {
+     fun requestExactAlarmPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK

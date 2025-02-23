@@ -9,7 +9,6 @@ import com.example.diseasepredictionappproject.view_model.repository.AlarmReposi
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -19,11 +18,11 @@ class AlarmViewModel @Inject constructor (
 ) : ViewModel() {
 
     private val _alarmData = MutableStateFlow<AlarmEntity?>(null)
-    val alarmData: StateFlow<AlarmEntity?> = _alarmData.asStateFlow()
+    val alarmData: StateFlow<AlarmEntity?> get() = _alarmData
 
     fun fetchAlarmData(alarmId: Long) {
         viewModelScope.launch {
-            val alarm = repository.getAlarmById(alarmId)
+            val alarm = repository.getAlarmById(alarmId) // Room DB에서 알람 조회
             _alarmData.value = alarm
         }
     }

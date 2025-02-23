@@ -12,7 +12,7 @@ import com.example.diseasepredictionappproject.room_db.medicine.MedicineDao
 import com.example.diseasepredictionappproject.room_db.medicine.MedicineEntity
 
 @RequiresApi(Build.VERSION_CODES.O)
-@Database(entities = [PredictionEntity::class, MedicineEntity::class, AlarmEntity::class], version = 3, exportSchema = false)
+@Database(entities = [PredictionEntity::class, MedicineEntity::class, AlarmEntity::class], version = 4, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun getPredictionDao(): PredictionDao
     abstract fun getMedicineDao(): MedicineDao
