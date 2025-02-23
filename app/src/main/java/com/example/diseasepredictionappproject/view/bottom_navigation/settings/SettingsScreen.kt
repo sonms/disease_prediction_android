@@ -59,19 +59,13 @@ fun SettingsScreen(
 
 
     //알림
-    val isAlarmCheck by PreferenceDataStore.getAlarmFlow(context).collectAsState(initial = false)
+    val isAlarmCheck by PreferenceDataStore.getAlarmFlow(context).collectAsState(initial = true)
 
 
 
     LazyColumn (
         modifier = Modifier.wrapContentHeight()
     ) {
-        item {
-            SettingDivideItem(mainText = "글자 크기 조정", subText = "이곳을 눌러 글자 크기 조절하기", fontSize = fontSize) {
-                isOpen = !isOpen
-            }
-        }
-
         item {
             Row (
                 modifier = Modifier
@@ -100,6 +94,12 @@ fun SettingsScreen(
                         uncheckedBorderColor = Color.LightGray
                     )
                 )
+            }
+        }
+
+        item {
+            SettingDivideItem(mainText = "글자 크기 조정", subText = "이곳을 눌러 글자 크기 조절하기", fontSize = fontSize) {
+                isOpen = !isOpen
             }
         }
 
@@ -220,7 +220,7 @@ fun SettingDivideItem(
             Column (
                 modifier = Modifier
                     .clickable { onClickItem() }
-                    .padding(top = 10.dp)
+                    .padding(top = 10.dp, start = 10.dp)
             ) {
                 Text(
                     text = mainText,
@@ -241,7 +241,7 @@ fun SettingDivideItem(
                         .fillMaxWidth()
                         .padding(top = 10.dp),
                     thickness = 2.dp,
-                    color = Color.Gray.copy(0.5f)
+                    color = Color.LightGray.copy(0.5f)
                 )
             }
         }
@@ -250,7 +250,7 @@ fun SettingDivideItem(
             Column (
                 modifier = Modifier
                     .clickable { onClickItem() }
-                    .padding(top = 10.dp)
+                    .padding(top = 10.dp, start = 10.dp)
             ) {
                 Text(
                     text = mainText,
@@ -271,7 +271,7 @@ fun SettingDivideItem(
                         .fillMaxWidth()
                         .padding(top = 10.dp),
                     thickness = 2.dp,
-                    color = Color.Black.copy(0.5f)
+                    color = Color.LightGray.copy(0.5f)
                 )
             }
         }

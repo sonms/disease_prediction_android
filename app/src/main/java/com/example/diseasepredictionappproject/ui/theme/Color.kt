@@ -2,9 +2,11 @@ package com.example.diseasepredictionappproject.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
+val Purple100 = Color(0xFFAA86FD)
 val Purple80 = Color(0xFFD0BCFF)
 val PurpleGrey80 = Color(0xFFCCC2DC)
 val Pink80 = Color(0xFFEFB8C8)
+val Pink90 = Color(0xFFEB8FAA)
 val Pink100 = Color(0xFFF44336)
 
 val Purple40 = Color(0xFF6650a4)
