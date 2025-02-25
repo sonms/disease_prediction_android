@@ -32,10 +32,8 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.diseasepredictionappproject.R
 import com.example.diseasepredictionappproject.data.PredictionDiseaseResponse
@@ -391,7 +389,15 @@ fun PredictScreen(
                     modifier = Modifier.padding(top = 16.dp),
                     onClick = {
                     val activeFeatures = featureNames.zip(postData).filter { it.second == 1 }.map { it.first }
-                    predictionDiseaseName?.let { viewModel.addPredictionData(it, activeFeatures.joinToString(", "), false, "") }
+                    predictionDiseaseName?.let {
+                        viewModel.addPredictionData(
+                            it,
+                            activeFeatures.joinToString(", "),
+                            false,
+                            "",
+                            null
+                        )
+                    }
 
                     isSaved = !isSaved
                 }) {

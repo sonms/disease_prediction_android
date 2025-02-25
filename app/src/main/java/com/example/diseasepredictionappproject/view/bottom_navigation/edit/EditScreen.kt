@@ -172,11 +172,7 @@ fun EditScreen(
     }
 
     var isSetAlarm by remember {
-        if (editAlarmData == null) {
-            mutableStateOf(false)
-        } else {
-            mutableStateOf(true)
-        }
+        mutableStateOf(false)
     }
 
     //에러 제어
@@ -216,45 +212,6 @@ fun EditScreen(
         mutableStateOf("")
     }
 
-
-    /*if (type == "default" || type == "add") {
-        LaunchedEffect(Unit) {
-            editTitle = ""
-            editContent = ""
-            editType = ""
-        }
-    } else {
-        if (data == "prediction") {
-            LaunchedEffect(Unit) {
-                predictionViewModel.setSelectedId(id = id.toLongOrNull())
-                editType = "Prediction"
-            }
-        } else {
-            LaunchedEffect(Unit) {
-                medicineViewModel.setSelectedId(id = id.toLongOrNull())
-                editType = "Medicine"
-            }
-        }
-    }
-
-
-    if (data == "prediction") {
-        LaunchedEffect(editPredictionData) {
-            editTitle = editPredictionData?.diseaseName ?: ""
-            editContent = editPredictionData?.diseaseContent ?: ""
-
-            Log.e("editTest1", editTitle.toString())
-            Log.e("editTest1", editContent.toString())
-        }
-    } else {
-        LaunchedEffect(editMedicineData) {
-            editTitle = editMedicineData?.itemName ?: ""
-            editContent = editMedicineData?.efcyQesitm ?: ""
-
-            Log.e("editTest2", editTitle.toString())
-            Log.e("editTest2", editContent.toString())
-        }
-    }*/
     LaunchedEffect(Unit) {
         LoadingState.show()
     }
@@ -272,7 +229,7 @@ fun EditScreen(
         else -> {
             when (data) {
                 "prediction" -> {
-                    LaunchedEffect(editPredictionData) {
+                    /*LaunchedEffect(editPredictionData) {
                         predictionViewModel.setSelectedId(id = id.toLongOrNull())
                         editType = "Prediction"
 
@@ -281,7 +238,41 @@ fun EditScreen(
                         Log.e("editTest1", editTitle.toString())
                         Log.e("editTest1", editContent.toString())
 
+                        val alarmId = editPredictionData?.alarmId
+                        Log.e("editTest1", alarmId.toString())
+                        if (alarmId != null) {
+                            alarmViewModel.alarmData.collectAsState().value?.let { editAlarmData ->
+                                // CoroutineScope를 사용하지 않고 collect 안에서 상태 업데이트
+                                isSetAlarm = true
+
+                                alarmContent = editAlarmData.alarmContent.toString()
+                                selectedDay = editAlarmData.alarmTime.split(" ").first().toIntOrNull() ?: -1
+                                editSelectedTime = editAlarmData.alarmTime.split(" ").last().toString()
+                            }
+                        }
+                        Log.e("editTest1", editAlarmData.toString())
                         LoadingState.hide()
+                    }*/
+                    LaunchedEffect(editPredictionData) {
+                        predictionViewModel.setSelectedId(id = id.toLongOrNull())
+                        editType = "Prediction"
+
+                        editTitle = editPredictionData?.diseaseName ?: ""
+                        editContent = editPredictionData?.diseaseContent ?: ""
+
+                        val alarmId = editPredictionData?.alarmId
+                        if (alarmId != null) {
+                            alarmViewModel.fetchAlarmData(alarmId) // Fetch alarm data
+                        }
+                        LoadingState.hide()
+                    }
+
+                    if (editAlarmData != null) {
+                        isSetAlarm = true
+                        alarmContent = editAlarmData?.alarmContent.toString()
+                        selectedDay = editAlarmData?.alarmTime?.split(" ")?.first()?.toIntOrNull() ?: -1
+                        editSelectedTime = editAlarmData?.alarmTime?.split(" ")?.last().toString()
+                        Log.e("editTest1", editAlarmData.toString())
                     }
                 }
                 "medicine" -> {
@@ -295,7 +286,26 @@ fun EditScreen(
                         Log.e("editTest2", editTitle.toString())
                         Log.e("editTest2", editContent.toString())
 
+                        /*val alarmId = editMedicineData?.alarmId
+                        if (alarmId != null) {
+                            alarmViewModel.fetchAlarmData(alarmId)
+                            isSetAlarm = true
+
+                            alarmContent = editAlarmData?.alarmContent.toString()
+                            selectedDay = editAlarmData?.alarmTime?.split(" ")?.first()?.toInt() ?: -1
+                            editSelectedTime =
+                                editAlarmData?.alarmTime?.split(" ")?.last()?.toString().toString()
+                        }*/
+                        Log.e("editTest2", editAlarmData.toString())
                         LoadingState.hide()
+                    }
+
+                    if (editAlarmData != null) {
+                        isSetAlarm = true
+                        alarmContent = editAlarmData?.alarmContent.toString()
+                        selectedDay = editAlarmData?.alarmTime?.split(" ")?.first()?.toIntOrNull() ?: -1
+                        editSelectedTime = editAlarmData?.alarmTime?.split(" ")?.last().toString()
+                        Log.e("editTest2", editAlarmData.toString())
                     }
                 }
             }
@@ -317,12 +327,12 @@ fun EditScreen(
 
 
 
-    LaunchedEffect(editPredictionData, editMedicineData) {
+    /*LaunchedEffect(editPredictionData, editMedicineData) {
         val alarmId = editPredictionData?.id ?: editMedicineData?.id
         if (alarmId != null) {
             alarmViewModel.fetchAlarmData(alarmId)
         }
-    }
+    }*/
 
 
     Column (
@@ -404,7 +414,8 @@ fun EditScreen(
                                     editTitle,
                                     editContent,
                                     false,
-                                    ""
+                                    "",
+                                    uniqueRequestCode.toLong()
                                 )
 
                                 // 알람 추가
@@ -460,7 +471,8 @@ fun EditScreen(
                                         updateDe = LocalDate.now().toString(),
                                         itemImage = "",
                                         bizrno = "",
-                                        isBookMark = false
+                                        isBookMark = false,
+                                        alarmId = uniqueRequestCode.toLong()
                                     )
                                 )
 
@@ -847,9 +859,6 @@ fun EditSchedule(
     onClickTime : (Boolean) -> Unit,
     onTextChange: (String) -> Unit
 ) {
-    var isOpenAlarm by remember {
-        mutableStateOf(initStatus)
-    }
 
     var alarmMessage by remember {
         mutableStateOf(alarmContent)
@@ -873,9 +882,8 @@ fun EditSchedule(
         Spacer(modifier = Modifier.weight(1f))
 
         Switch(
-            checked = isOpenAlarm,
+            checked = initStatus,
             onCheckedChange = {
-                isOpenAlarm = it
                 onSetAlarm(it)
                 keyboardController?.hide()
             },
@@ -889,7 +897,7 @@ fun EditSchedule(
         )
     }
 
-    if (isOpenAlarm) {
+    if (initStatus) {
         //날짜 설정
         Column (
             modifier = Modifier
