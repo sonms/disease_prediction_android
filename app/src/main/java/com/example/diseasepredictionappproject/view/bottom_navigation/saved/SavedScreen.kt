@@ -352,6 +352,8 @@ fun SavedItem(
            }
         }
     }
+
+    Spacer(modifier = Modifier.padding(bottom = 10.dp))
 }
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -431,6 +433,8 @@ fun MedicineItem(
             )*/
         }
     }
+
+    Spacer(modifier = Modifier.padding(bottom = 10.dp))
 }
 
 @Composable
