@@ -444,9 +444,27 @@ fun BtnUI(
         Icon(painter = painterResource(id = image), contentDescription = "button icon")
         
         when (index) {
-            0 -> Text(text = "카메라로 촬영", style = FontUtils.getTextStyle(fontSize.size))
-            1 -> Text(text = "앨범에서 선택", style = FontUtils.getTextStyle(fontSize.size))
-            2 -> Text(text = "예측 시작", style = FontUtils.getTextStyle(fontSize.size))
+            0 -> {
+                Text(
+                    text = "카메라",
+                    style = FontUtils.getTextStyle(fontSize.size),
+                    modifier = Modifier.padding(end = 10.dp)
+                )
+            }
+            1 -> {
+                Text(
+                    text = "앨범",
+                    style = FontUtils.getTextStyle(fontSize.size),
+                    modifier = Modifier.padding(start = 10.dp)
+                )
+            }
+            2 -> {
+                Text(
+                    text = "예측 시작",
+                    style = FontUtils.getTextStyle(fontSize.size),
+                    modifier = Modifier.padding(bottom = 10.dp)
+                )
+            }
         }
     }
 }
