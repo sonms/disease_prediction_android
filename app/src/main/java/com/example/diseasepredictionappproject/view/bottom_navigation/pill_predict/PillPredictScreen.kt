@@ -463,6 +463,7 @@ fun BtnUI(
                     text = "예측 시작",
                     style = FontUtils.getTextStyle(fontSize.size),
                     modifier = Modifier.padding(bottom = 10.dp)
+
                 )
             }
         }
